@@ -1,0 +1,2699 @@
+---
+title: "Adverse pregnancy outcomes analysis vaginal microbiome"
+author: "Alexandra Jazmin Roth Schulze"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+---
+
+```{r SESSION_INFO, echo=FALSE}
+#R version 3.6.3 (2020-02-29)
+#Platform: x86_64-pc-linux-gnu (64-bit)
+#Running under: CentOS Linux 7 (Core)
+
+#Matrix products: default
+#BLAS:   /stornext/System/data/apps/R/R-3.6.3/lib64/R/lib/libRblas.so
+#LAPACK: /stornext/System/data/apps/R/R-3.6.3/lib64/R/lib/libRlapack.so
+
+#Random number generation:
+# RNG:     Mersenne-Twister 
+# Normal:  Inversion 
+# Sample:  Rounding 
+ 
+#locale:
+# [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8     LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+# [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+#attached base packages:
+#[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+#[1] phyloseq_1.30.0 edgeR_3.28.1    limma_3.42.2   
+
+#loaded via a namespace (and not attached):
+#[1] Rcpp_1.0.3                  locfit_1.5-9.4              ape_5.3                     lattice_0.20-38             Biostrings_2.54.0           assertthat_0.2.1           
+#[7] foreach_1.5.2               R6_2.4.1                    GenomeInfoDb_1.22.1         plyr_1.8.6                  stats4_3.6.3                ggplot2_3.3.0              
+#[13] pillar_1.4.3                zlibbioc_1.32.0             rlang_0.4.5                 rstudioapi_0.11             data.table_1.12.8           vegan_2.6-4                
+#[19] S4Vectors_0.24.4            Matrix_1.2-18               splines_3.6.3               statmod_1.4.34              BiocParallel_1.20.1         stringr_1.4.0              
+#[25] igraph_1.2.4.2              RCurl_1.98-1.2              munsell_0.5.0               DelayedArray_0.12.3         compiler_3.6.3              pkgconfig_2.0.3            
+#[31] BiocGenerics_0.32.0         multtest_2.42.0             mgcv_1.8-31                 biomformat_1.14.0           tidyselect_1.0.0            SummarizedExperiment_1.16.1
+#[37] tibble_2.1.3                GenomeInfoDbData_1.2.2      IRanges_2.20.2              codetools_0.2-16            matrixStats_0.56.0          permute_0.9-7              
+#[43] crayon_1.3.4                dplyr_0.8.5                 MASS_7.3-51.5               bitops_1.0-6                grid_3.6.3                  nlme_3.1-144               
+#[49] jsonlite_1.6.1              gtable_0.3.0                lifecycle_0.2.0             magrittr_1.5                scales_1.1.0                stringi_1.4.6              
+#[55] XVector_0.26.0              reshape2_1.4.3              Rhdf5lib_1.8.0              iterators_1.0.14            tools_3.6.3                 ade4_1.7-22                
+#[61] Biobase_2.46.0              glue_1.3.2                  purrr_0.3.3                 parallel_3.6.3              survival_3.1-8              colorspace_1.4-1           
+#[67] rhdf5_2.30.1                cluster_2.1.0               GenomicRanges_1.38.0       
+```
+
+```{r D8, echo=FALSE}
+options(width = 90)
+```
+
+```{r D2, include=FALSE}
+library(knitr)
+opts_chunk$set(comment = NA, warning=FALSE, message=FALSE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+library("ggplot2")
+theme_set(theme_bw())
+pal = "Set1"
+scale_colour_discrete <- function(palname = pal, ...) {
+    scale_colour_brewer(palette = palname, ...)
+}
+scale_fill_discrete <- function(palname = pal, ...) {
+    scale_fill_brewer(palette = palname, ...)
+}
+```
+
+```{r PackageLoad, tidy=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+library("data.table")
+library("Rcpp")
+library("dplyr")
+library("ggplot2")
+library("ade4")
+library("plotly")
+library("RColorBrewer")
+library("matrixStats")
+library("knitr")
+library("RColorBrewer")
+library("limma")
+library("edgeR")
+library("phyloseq")
+library("vegan")
+library("reshape2")
+library("scales")
+library("lme4")
+library("lmerTest")
+library("Hmisc")
+library("emmeans")
+library("doBy")
+library("metagMisc")
+library("easyGgplot2")
+library("ggpubr")
+library("kableExtra")
+library("table1")
+library("pscl")
+library("MASS")
+library("grid")
+library("boot")
+library("TMB") 
+library("glmmTMB") 
+library("bbmle")
+library("lmtest")
+library("DHARMa")
+library("predictmeans")
+library("car")
+library("modelsummary")
+library("forcats")
+library("microbiomeSeq")
+
+
+
+#####################################################
+# FUNCTIONS USED FOR DIFFERENTIAL ABUNDANCE ANALYSIS #
+#####################################################
+
+
+################################
+#EFFECTIVE SIZES FUNCTION
+##This function is used within the VoomLmFit function below
+effectiveLibSizes <- function(y, log=FALSE, ...)
+  UseMethod("effectiveLibSizes")
+
+effectiveLibSizes.DGEList <- function(y, log=FALSE, ...)
+  #	Effective (normalized) library size
+  #	Gordon Smyth.
+  #	Created 19 Apr 2020. Last modified.
+{
+  if(is.null(y$offset)) {
+    els <- y$samples$lib.size*y$samples$norm.factors
+    if(log) els <- log(els)
+  } else {
+    els <- y$offset[1,]
+    if(!log) els <- exp(els)
+  }
+  els
+}
+
+effectiveLibSizes.DGELRT <- effectiveLibSizes.DGEGLM <- function(y, log=FALSE, ...)
+  #	Effective (normalized) library size from DGEGLM fit.
+  #	Gordon Smyth.
+  #	Created 19 Apr 2020. Last modified.
+{
+  els <- y$offset[1,]
+  if(!log) els <- exp(els)
+  els
+}
+
+effectiveLibSizes.default <- function(y, log=FALSE, ...)
+  #	Effective library sizes for a matrix, i.e., just the column sums
+  #	Gordon Smyth.
+  #	Created 19 Apr 2020. Last modified.
+{
+  y <- as.matrix(y)
+  els <- colSums(y)
+  if(log) els <- log(els)
+  els
+}
+################################
+
+
+################################
+#WEIGHTEDLOWESS
+##This function is used within the VoomLmFit function below
+weightedLowess <- function(x, y, weights=NULL, delta=NULL, npts=200, span=0.3, iterations=4L, output.style="loess")
+  # This function clusters points by average linkage and fits a lowess curve of degree 1 to the cluster
+  # midpoints. Fitted values are computed by linear interpolation of the fitted coefficients (i.e. 
+  # quadratic interpolation between points. Several iterations of robustification are performed
+  # using the fitted residuals.
+  #
+  # Created by Aaron Lun 13 Jan 2014.
+  # Last modified 8 Jun 2020.
+{
+  #	Check arguments
+  x <- as.double(x)
+  y <- as.double(y)
+  if(!identical(length(y),length(x))) stop("x and y should have same length")
+  if(is.null(weights)) {
+    weights <- rep_len(1,length(y))
+  } else {
+    weights <- as.double(weights)
+    if(!identical(length(y),length(weights))) stop("weights should have same length as x and y")
+  }
+  iterations <- as.integer(iterations)
+  
+  #	Choosing an appropriate 'delta' for approximation. We assume that the covariates
+  #	have some cluster structure, where clusters are defined by partitioning on the 
+  #	'numclusters' largest distances between points. We want 'npts' evenly spaced points 
+  #	across the cluster range (i.e. the total range minus the partitioned distances).
+  #	Each cluster must also have at least one point; so, we compute the spacing (and
+  #	thus delta) as the ratio of the cluster range to the remaining number of points
+  #	(after each additional cluster beyond the required first one has eaten 1 point). 
+  o <- order(x)
+  x <- x[o]
+  if (is.null(delta)) {
+    npts <- as.integer(npts+0.5)
+    if (npts < 1L) { stop("number of points should be a positive integer") }
+    if (npts >= length(x)) { 
+      delta <- 0
+    } else {
+      dx <- sort(diff(x))
+      cumrange <- cumsum(dx)
+      numclusters <- seq.int(0L,npts-1L)
+      delta <- min(cumrange[length(dx)-numclusters]/(npts-numclusters))
+    }
+  }
+  delta <- as.double(delta)
+  
+  #	Running the smoothing procedure with specified values.
+  out <- .Call("weighted_lowess", x, y[o], weights[o], span, iterations, delta, PACKAGE="limma")
+  
+  #	Output
+  output.style <- match.arg(output.style,c("loess","lowess"))
+  if(output.style=="lowess") {
+    #		Output with ordered x, as for lowess()
+    names(out) <- c("y", "x")
+    out$x <- x
+    out$delta <- delta
+  } else {
+    #		Output in the original order, as for loess() or loessFit()
+    names(out) <- c("fitted", "weights")
+    out$fitted[o] <- out$fitted
+    out$residuals <- y-out$fitted
+    out$weights[o] <- out$weights
+    out$delta <- delta
+  }
+  
+  out
+}
+################################
+
+
+################################
+#VOOMLMFIT FUNCTION
+##VoomLmFit function used for Differential abundance analysis (this was done before the new version of the EdgeR package contained this function that allows for loss of residual degrees of freedom due to exact zeros)
+voomLmFit <- function(
+	counts, design=NULL, block=NULL, prior.weights=NULL,
+	sample.weights=FALSE, var.design=NULL, var.group=NULL, 
+	lib.size=NULL, normalize.method="none",
+	span=0.5, plot=FALSE, save.plot=FALSE
+)
+#	limma+lmFit pipeline for counts taking into account of structural zeros
+#	Creates an MArrayLM object for entry to eBayes() etc in the limma pipeline.
+#	Depends on edgeR as well as limma
+#	Gordon Smyth
+#	Created 21 Jan 2020.  Last modified 10 Jun 2020.
+{
+	Block <- !is.null(block)
+	PriorWeights <- !is.null(prior.weights)
+	SampleWeights <- sample.weights || !is.null(var.design) || !is.null(var.group)
+
+#	Can't specify prior weights and ask for sample weights to be estimated as well
+	if(PriorWeights && SampleWeights) stop("Can't specify prior.weights and estimate sample weights")
+
+#	Create output object
+	out <- list()
+
+#	Extract counts from known data objects
+	if(is(counts,"SummarizedExperiment")) counts <- SE2DGEList(counts)
+	if(is(counts,"DGEList")) {
+		out$genes <- counts$genes
+		out$targets <- counts$samples
+		if(is.null(design) && diff(range(as.numeric(counts$sample$group)))>0) design <- model.matrix(~group,data=counts$samples)
+		if(is.null(lib.size)) lib.size <- effectiveLibSizes(counts)
+		counts <- counts$counts
+	} else {
+		if(is(counts,"eSet")) {
+			if(!requireNamespace("Biobase",quietly=TRUE))
+				stop("Biobase package required but is not installed (or can't be loaded)")
+			if(length(Biobase::fData(counts))) out$genes <- Biobase::fData(counts)
+			if(length(Biobase::pData(counts))) out$targets <- Biobase::pData(counts)
+			counts <- get("counts",Biobase::assayData(counts))
+		} else {
+			counts <- as.matrix(counts)
+		}
+	}
+
+#	Check counts
+	n <- nrow(counts)
+	if(n < 2L) stop("Need at least two genes to fit a mean-variance trend")
+	m <- min(counts)
+	if(is.na(m)) stop("NA counts not allowed")
+	if(m < 0) stop("Negative counts not allowed")
+
+#	Check design
+	if(is.null(design)) {
+		design <- matrix(1,ncol(counts),1)
+		rownames(design) <- colnames(counts)
+		colnames(design) <- "GrandMean"
+	}
+
+#	Check lib.size
+	if(is.null(lib.size)) lib.size <- colSums(counts)
+
+#	Expand prior.weights if necessary
+	if(!is.null(prior.weights)) prior.weights <- asMatrixWeights(prior.weights,dim(counts))
+
+#	log2-counts-per-million
+	y <- t(log2(t(counts+0.5)/(lib.size+1)*1e6))
+
+#	Microarray-style normalization
+	y <- normalizeBetweenArrays(y,method=normalize.method)
+
+#	Fit linear model
+	fit <- lmFit(y,design,weights=prior.weights)
+
+#	Find largest leverage value of design matrix
+	if(is.null(fit$qr))
+		h <- hat(design,intercept=FALSE)
+	else
+		h <- hat(fit$qr)
+	MinGroupSize <- 1/max(h)
+
+#	Identify fitted values that are exactly zero and should not contribute to the genewise variances
+#	Note that a single zero is never a problem
+	RowHasZero <- which(rowSums(counts==0) >= max(2,MinGroupSize))
+	AnyZeroRows <- as.logical(length(RowHasZero))
+	if(AnyZeroRows) {
+		countsZero <- counts[RowHasZero,,drop=FALSE]
+		PoissonFit <- glmFit(countsZero,design=design,lib.size=lib.size,dispersion=0,prior.count=0)
+		IsZero <- (PoissonFit$fitted.values < 1e-4 & countsZero < 1e-4)
+		RowHasExactZero <- which(rowSums(IsZero) > 0)
+#		If any exact zero fits, then rerun the linear model for those rows with NAs
+		if(length(RowHasExactZero)) {
+			RowHasZero <- RowHasZero[RowHasExactZero]
+			IsZero <- IsZero[RowHasExactZero,,drop=FALSE]
+			yNAshort <- y[RowHasZero,,drop=FALSE]
+			yNAshort[IsZero] <- NA
+			fitNA <- suppressWarnings(lmFit(yNAshort,design,weights=prior.weights[RowHasZero,,drop=FALSE]))
+			fit$df.residual[RowHasZero] <- fitNA$df.residual
+			fit$sigma[RowHasZero] <- fitNA$sigma
+#			If blocking or sample weights are present, then we will later on need a full length copy of y with NAs inserted
+			if(Block || SampleWeights) {
+				yNAfull <- y
+				yNAfull[RowHasZero,] <- yNAshort
+			}
+		} else {
+			AnyZeroRows <- FALSE
+		}
+	}
+
+#	If no replication found, assume all weights are 1 and return fit already computed
+	HasRep <- (fit$df.residual > 0L)
+	NWithReps <- sum(HasRep)
+	if(NWithReps < 2L) {
+		if(NWithReps == 0L) warning("The experimental design has no replication. Setting weights to 1.")
+		if(NWithReps == 1L) warning("Only one gene with any replication. Setting weights to 1.")
+		fit$genes <- out$genes
+		return(fit)
+	}
+
+#	Fit lowess trend to sqrt-standard-deviations by log-count-size
+	Amean <- Amean2 <- rowMeans(y)
+	if(AnyZeroRows) Amean2[RowHasZero] <- rowMeans(yNAshort,na.rm=TRUE)
+	sx <- Amean2[HasRep]+mean(log2(lib.size+1))-log2(1e6)
+	sy <- sqrt(fit$sigma[HasRep])
+	if(AnyZeroRows)
+		l <- weightedLowess(sx,sy,span=span,weights=fit$df.residual[HasRep],output.style="lowess")
+	else
+		l <- lowess(sx,sy,f=span)
+	if(plot) {
+		plot(sx,sy,xlab="log2( count size + 0.5 )",ylab="Sqrt( standard deviation )",pch=16,cex=0.25)
+		title("voom: Mean-variance trend")
+		lty <- ifelse(Block || SampleWeights,2,1)
+		lines(l,col="red",lty=lty)
+	}
+
+#	Make interpolating rule
+	f <- approxfun(l, rule=2, ties=list("ordered",mean))
+
+#	Find individual quarter-root fitted counts
+	if(fit$rank < ncol(design)) {
+		j <- fit$pivot[1:fit$rank]
+		fitted.values <- fit$coefficients[,j,drop=FALSE] %*% t(fit$design[,j,drop=FALSE])
+	} else {
+		fitted.values <- fit$coefficients %*% t(fit$design)
+	}
+	fitted.cpm <- 2^fitted.values
+	fitted.count <- 1e-6 * t(t(fitted.cpm)*(lib.size+1))
+	fitted.logcount <- log2(fitted.count)
+
+#	Apply trend to individual observations to get voom weights
+	w <- 1/f(fitted.logcount)^4
+	dim(w) <- dim(fitted.logcount)
+
+#	Add voom weights to prior weights
+	if(PriorWeights)
+		weights <- w * prior.weights
+	else
+		weights <- w
+
+#	Estimate sample weights?
+	if(SampleWeights) {
+		if(AnyZeroRows) {
+			sw <- arrayWeights(yNAfull,design,weights=weights,var.design=var.design,var.group=var.group)
+		} else {
+			sw <- arrayWeights(y,design,weights=weights,var.design=var.design,var.group=var.group)
+		}
+		message("First sample weights (min/max) ", paste(format(range(sw)),collapse="/") )
+		if(Block) weights <- t(sw * t(weights))
+	}
+
+#	Estimate correlation?
+	if(Block) {
+		if(AnyZeroRows) {
+			dc <- suppressWarnings(duplicateCorrelation(yNAfull,design,block=block,weights=weights))
+		} else {
+			dc <- suppressWarnings(duplicateCorrelation(y,design,block=block,weights=weights))
+		}
+		correlation <- dc$consensus.correlation
+		if(is.na(correlation)) correlation <- 0
+		message("First intra-block correlation  ",format(correlation))
+	} else {
+		correlation <- NULL
+	}
+
+#	Seond iteration to refine intra-block correlation or sample weights
+	if(Block || SampleWeights) {
+#		Rerun voom weights with new correlation and sample weights
+		if(SampleWeights)
+			weights <- asMatrixWeights(sw,dim(y))
+		else
+			weights <- prior.weights
+		fit <- lmFit(y,design,block=block,correlation=correlation,weights=weights)
+		if(AnyZeroRows) {
+			fitNA <- suppressWarnings(lmFit(yNAshort,design,block=block,correlation=correlation,weights=weights[RowHasZero,,drop=FALSE]))
+			fit$df.residual[RowHasZero] <- fitNA$df.residual
+			fit$sigma[RowHasZero] <- fitNA$sigma
+		}
+		sy <- sqrt(fit$sigma[HasRep])
+		if(AnyZeroRows)
+			l <- weightedLowess(sx,sy,span=span,weights=fit$df.residual[HasRep],output.style="lowess")
+		else
+			l <- lowess(sx,sy,f=span)
+		if(plot) {
+			lines(l,col="red")
+			legend("topright",lty=c(2,1),col="red",legend=c("First","Final"))
+		}
+		f <- approxfun(l, rule=2, ties=list("ordered",mean))
+		if(fit$rank < ncol(design)) {
+			j <- fit$pivot[1:fit$rank]
+			fitted.values <- fit$coefficients[,j,drop=FALSE] %*% t(fit$design[,j,drop=FALSE])
+		} else {
+			fitted.values <- fit$coefficients %*% t(fit$design)
+		}
+		fitted.cpm <- 2^fitted.values
+		fitted.count <- 1e-6 * t(t(fitted.cpm)*(lib.size+1))
+		fitted.logcount <- log2(fitted.count)
+		w <- 1/f(fitted.logcount)^4
+		dim(w) <- dim(fitted.logcount)
+		if(PriorWeights)
+			weights <- w * prior.weights
+		else
+			weights <- w
+		if(SampleWeights) {
+			if(AnyZeroRows) {
+				sw <- arrayWeights(yNAfull,design,weights=weights,var.design=var.design,var.group=var.group)
+			} else {
+				sw <- arrayWeights(y,design,weights=weights,var.design=var.design,var.group=var.group)
+			}
+			message("Final sample weights (min/max) ", paste(format(range(sw)),collapse="/") )
+			weights <- t(sw * t(weights))
+		}
+		if(Block) {
+			if(AnyZeroRows) {
+				dc <- suppressWarnings(duplicateCorrelation(yNAfull,design,block=block,weights=weights))
+			} else {
+				dc <- suppressWarnings(duplicateCorrelation(y,design,block=block,weights=weights))
+			}
+			correlation <- dc$consensus.correlation
+			if(is.na(correlation)) correlation <- 0
+			message("Final intra-block correlation  ",format(correlation))
+		}
+	}
+
+#	Final linear model fit with voom weights
+	fit <- lmFit(y,design,block=block,correlation=correlation,weights=weights)
+	if(is.null(fit$Amean)) fit$Amean <- Amean
+	if(AnyZeroRows) {
+		fitNA <- suppressWarnings(lmFit(yNAshort,design,block=block,correlation=correlation,weights=weights[RowHasZero,,drop=FALSE]))
+		fit$df.residual[RowHasZero] <- fitNA$df.residual
+		fit$sigma[RowHasZero] <- fitNA$sigma
+	}
+
+#	Output
+	fit$genes <- out$genes
+	fit$targets <- out$targets
+	if(is.null(fit$targets)) {
+		fit$targets <- data.frame(lib.size=lib.size)
+		row.names(fit$targets) <- colnames(y)
+	}
+	if(SampleWeights) fit$targets$sample.weights <- sw
+	if(save.plot) {
+		fit$voom.xy <- list(x=sx,y=sy,xlab="log2( count size + 0.5 )",ylab="Sqrt( standard deviation )")
+		fit$voom.line <- l
+	}
+	fit
+}
+################################
+```
+
+```{r RMAPfunction, echo=FALSE}
+
+#@@@IMPORTANT, THIS WAS MODIFIED TO USE adonis2 --> there seems to be a problem with adonis check: https://github.com/joey711/phyloseq/issues/1457
+#Beta diversity function repeated-measure aware permutation
+## Function to perform PERMANOVA analysis with repeat measure-aware permutations 
+PERMANOVA_repeat_measures <- function(
+  D, permute_within, blocks = NULL, block_data, permutations=999,
+  metadata_order = c(names(permute_within), names(block_data)),
+  na.rm=F) {
+  
+  # Make sure D is a dist object
+  if (class(D) != "dist") {
+    stop("D must be a dist object")
+  }
+  
+  # Default to free permutations if blocks is not given
+  if (!missing(block_data) && is.null(blocks)) {
+    stop("blocks must be given if block_data is present")
+  } else if (is.null(blocks)) {
+    blocks <- rep(1, nrow(permute_within))
+    block_data <- as.data.frame(matrix(0, nrow=1, ncol=0))
+  } else if (length(unique(blocks)) == 1) {
+    warning("blocks only contains one unique value")
+  }
+  
+  # Ensure no metadata overlap between permute_within and block_data
+  if (length(intersect(names(permute_within), names(block_data))) > 0) {
+    stop("metadata is repeated across permute_within and block_data")
+  }
+  
+  # Ensure that metadata_order only contains stuff in permute_within and block_data
+  if(length(setdiff(metadata_order, union(names(permute_within), names(block_data)))) > 0) {
+    stop("metadata_order contains metadata not in permute_within and block_data")
+  }
+  
+  # Ensure that the data in permute_within matches that in dist
+  ord <- rownames(as.matrix(D))
+  if (length(ord) != nrow(permute_within) || length(blocks) != length(ord)) {
+    stop("blocks, permute_within, and D are not the same size")
+  }
+  if (is.null(rownames(permute_within))) {
+    warning("permute_within has no rownames - can't verify sample orders")
+  } else if (!all(ord == rownames(permute_within))) {
+    stop("rownames do not match between permute_within and D")
+  }
+  
+  # Ensure matching between blocks and block_data
+  if (any(is.na(blocks))) {
+    stop("NAs are not allowed in blocks")
+  }
+  if (is.factor(blocks)) {
+    if (length(levels(blocks)) != nrow(block_data)) {
+      stop("block_data does not have as many rows as blocks has levels")
+    }
+    if (!is.null(rownames(block_data)) && any(rownames(block_data) != levels(blocks))) {
+      stop("block_data rownames does not match the levels of blocks")
+    }
+    # Discard level information
+    blocks <- as.numeric(blocks)
+  } else if (is.numeric(blocks)) {
+    if (blocks < 1 || max(blocks) > nrow(block_data)) {
+      stop("Numeric blocks has indices out of range")
+    }
+  } else if (is.character(blocks)) {
+    if (is.null(rownames(block_data)) || !all(blocks %in% rownames(block_data))) {
+      stop("blocks does not match the rownames of block_data")
+    }
+    # Transform to numeric
+    blocks <- match(blocks, rownames(block_data))
+  } else {
+    stop("blocks must be a numeric, factor, or character vector")
+  }
+  
+  # Error out on NA metadata rather than allowing adonis to error out with
+  # a totally nonsensical error message
+  if (any(is.na(permute_within)) || any(is.na(block_data))) {
+    if (na.rm) {
+      n_prerm <- length(blocks)
+      
+      # Remove NAs in block_data
+      hasna <- (rowSums(is.na(block_data)) > 0) | (sapply(split(rowSums(is.na(permute_within)) > 0, blocks), mean) == 1)
+      block_data <- block_data[!hasna,, drop=F]
+      keep <- !hasna[blocks]
+      blocks <- cumsum(!hasna)[blocks]
+      
+      blocks <- blocks[keep]
+      permute_within <- permute_within[keep,, drop=F]
+      D <- as.matrix(D)[keep, keep]
+      # block_data is not subset, as the rows with NAs are no longer referenced in blocks
+      
+      # Remove NAs in permute_within
+      keep <- rowSums(is.na(permute_within)) == 0
+      blocks <- blocks[keep]
+      permute_within <- permute_within[keep,, drop=F]
+      D <- as.dist(D[keep, keep])
+      
+      if (length(blocks) < ncol(permute_within) + ncol(block_data)) {
+        stop(sprintf("After omitting samples with NAs, the number of samples (%d) is less than the number of metadata (%d)",
+                     length(blocks), ncol(permute_within) + ncol(block_data)))
+      } else if (length(blocks) < n_prerm * 0.5) {
+        warning(sprintf("Removed %d samples with NA metadata", n_prerm - length(blocks)))
+      }
+    } else {
+      stop("Some metadata is NA! adonis does not support any NA in the metadata")
+    }
+  }
+  
+  # Warn on some suspicious input
+  persample <- apply(permute_within, 1, function(x)is.factor(x) && !any(duplicated(x)))
+  if (any(persample)) {
+    warning(sprintf("%s in permute_within has one DOF per sample.", colnames(permute_within)[which(persample)[1]]))
+  }
+  if (length(unique(blocks)) < nrow(block_data)) {
+    warning("Not all blocks have a sample associated with them. Block permutations will still be performed over the full set of blocks - if this is not desired, subset block_data to only the blocks which appear in the data.")
+  }
+  if (!any(duplicated(blocks))) {
+    warning("blocks contains no duplicated elements")
+  }
+  
+  library(vegan)
+  library(permute)
+  
+  # Test statistic from non-permuted data
+  mtdat <- cbind(permute_within, block_data[blocks,,drop=F])
+  ad <- adonis2(D ~ ., permutations=0, data=mtdat[, metadata_order, drop=F])
+  R2 <- ad$R2
+  names(R2) <- rownames(ad)
+  
+  # Permutations
+  nullsamples <- matrix(NA, nrow=length(R2), ncol=permutations)
+  for (i in seq_len(permutations)) {
+    within.i <- shuffle(nrow(permute_within), control=how(blocks=blocks))
+    block.i <- sample(seq_len(nrow(block_data)))
+    mtdat <- cbind(
+      permute_within[within.i,,drop=F],
+      block_data[block.i,,drop=F][blocks,,drop=F])
+    perm.ad <- adonis2(D ~ ., permutations=0, data=mtdat[, metadata_order, drop=F])
+    
+    nullsamples[,i] <- perm.ad$R2
+  }
+  
+  # For residuals, test the other direction (i.e. p-value of all covariates)
+  n <- length(R2)
+  R2[n-1] <- 1 - R2[n-1]
+  nullsamples[n-1,] <- 1 - nullsamples[n-1,]
+  
+  # P value calculation similar to adonis's
+  exceedances <- rowSums(nullsamples > R2)
+  P <- (exceedances + 1) / (permutations + 1)
+  
+  P[n] <- NA    # No p-values for "Total"
+  ad$`Pr(>F)` <- P
+  
+  return (ad)
+}
+```
+
+All the models for the microbiome were adjusted for SeqRun batch effect and mother ID as random effects and parity and BMI as fixed effects because we know from the literature that those have an important effect on the vaginal microbiome.
+
+#Vaginal microbiome
+
+##Premature delivery (PD)
+
+###Description of samples used in this analysis
+
+```{r Imp.format, echo=FALSE}
+X <- load(file="/$HOME/MicrobiomeObjectsWHLAsamples.RData")
+#"Vec2" "VecO"
+
+NewMet <- read.table(file="/Users/schulze.a/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/ENDIA_Run_17 Vaginal/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec2[[i]] <- phyloseq(otu_table(Vec2[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec2[[i]]), phy_tree(Vec2[[i]]))
+  Vec2[[i]] <- subset_samples(Vec2[[i]], GA_at_Delivery_w!="NA")
+  X <- cut(sample_data(Vec2[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Vec2[[i]])$GAD <- X
+  sample_data(Vec2[[i]])$GAD <- as.factor(sample_data(Vec2[[i]])$GAD)
+  sample_data(Vec2[[i]])$GAD_MOD <- paste(sample_data(Vec2[[i]])$GAD, sample_data(Vec2[[i]])$MOD, sep=".")
+  Vec2[[i]] <- prune_samples(sample_sums(Vec2[[i]]) > 5000, Vec2[[i]])
+  Vec2[[i]] <- prune_taxa(taxa_sums(Vec2[[i]]) > 30, Vec2[[i]])
+  Vec2[[i]] <- subset_samples(Vec2[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Vec2[[i]] <- subset_samples(Vec2[[i]], T1Dstatus=="T1D")
+}
+
+for(i in 1:5){
+VecO[[i]] <- phyloseq(otu_table(VecO[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecO[[i]]), phy_tree(VecO[[i]]))
+  VecO[[i]] <- subset_samples(VecO[[i]], GA_at_Delivery_w!="NA")
+  X <- cut(sample_data(VecO[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(VecO[[i]])$GAD <- X
+  sample_data(VecO[[i]])$GAD <- as.factor(sample_data(VecO[[i]])$GAD)
+  sample_data(VecO[[i]])$GAD_MOD <- paste(sample_data(VecO[[i]])$GAD, sample_data(VecO[[i]])$MOD, sep=".")
+  VecO[[i]] <- prune_samples(sample_sums(VecO[[i]]) > 5000, VecO[[i]])
+  VecO[[i]] <- prune_taxa(taxa_sums(VecO[[i]]) > 30, VecO[[i]])
+  VecO[[i]] <- subset_samples(VecO[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  VecO[[i]] <- subset_samples(VecO[[i]], T1Dstatus=="T1D")
+}
+X <- cut(sample_data(Vec2[[1]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(Vec2[[1]])$GAD <- X
+sample_data(Vec2[[1]])$GAD <- as.factor(sample_data(Vec2[[1]])$GAD)
+TB <- table(sample_data(Vec2[[1]])$GAD)
+
+```
+
+For analysing the vaginal microbiome of women who had premature deliveries vs. women who had term deliveries only women **with T1D** were considered due to the number of premature deliveries being too small (n=8) in women without T1D. There are a total of 148 samples distributed as follows:
+
+```{r, Count, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+Premature: < 37 weeks of gestation.
+
+Term: > 37 weeks of gestation.
+
+###Alpha diversity
+
+```{r, AlphaAge, echo=FALSE}
+OTUVag_RA <- Vec2[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+```
+
+glmer.nb was used for richness and invSimpson because the data distributes like a negative binomial and we have random factos [i.e. sequencing batch and motherid].
+
+```{r AlphaTest, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+#Categorize variable GA at Delivery w into categorical "premature" vs "term" delivery = GAD = "Gestational age at delivery categorical"
+Dummy <- OTUVag_RA
+X <- cut(sample_data(Dummy)$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(Dummy)$GAD <- X
+sample_data(Dummy)$GAD <- as.factor(sample_data(Dummy)$GAD)
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GAD <- factor(DivCal_R_df$GAD)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+## Observed Richness
+ob_GAD <- glmer.nb(Observed ~ Parity*GAD + BMI_Cat*GAD + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+ob_GAD <- glmer.nb(Observed ~ Parity + BMI_Cat + GAD + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+
+ResObs <- Anova(ob_GAD)
+RGAD <- round(ResObs$`Pr(>Chisq)`[2], 2)
+
+sample_data(Dummy)$GAD <- relevel(sample_data(Dummy)$GAD, ref="Term")
+Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GAD") + geom_jitter() +  annotate("text", label = paste("P=",RGAD), x=1.5, y =43, size = 4, colour = "black")  + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol) + theme(legend.position='none')
+
+# InvSimpson
+in_GAD <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity*GAD + BMI*GAD + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+ResIn <- Anova(in_GAD)
+RIGAD <- round(ResIn$`Pr(>Chisq)`[2], 2)
+
+#### FOR CONTRASTS OF PE WITHIN A EACH BMI CATEGORIES  ##########################################
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="Underweight")
+DivCal_R_df$BMI_Cat <- droplevels(DivCal_R_df$BMI_Cat, exclude = "Underweight")
+DivCal_R_df$BMIGAD <- with(DivCal_R_df, interaction(BMI_Cat, GAD, sep = "x"))
+in_GAD <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity + BMIGAD, data=DivCal_R_df)
+marginal = emmeans(in_GAD, ~ BMIGAD)
+##Contrast the levels I want
+Contrasts = list(GADNormal=c(1,0,0,-1,0,0), GADOver=c(0,1,0,0,-1,0), GADObese=c(0,0,1,0,0,-1))
+ResCat <- contrast(marginal, Contrasts, adjust="none") 
+ResIn <- data.frame(ResCat)
+IGAD_Normal <- round(ResIn$p.value[1], 3)
+IGAD_Ob <- round(ResIn$p.value[3], 3)
+
+
+#CATEGORIZE BMI FOR PLOT
+X <- cut(sample_data(Dummy)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+sample_data(Dummy)$BMI_Cat <- as.factor(X)
+Dummy <- subset_samples(Dummy, BMI_Cat!="NA")
+DummyN <- subset_samples(Dummy, BMI_Cat=="Normal")
+DummyOv <- subset_samples(Dummy, BMI_Cat=="Overweight")
+DummyOb <- subset_samples(Dummy, BMI_Cat=="Obese")
+GADcol <- c("darkgreen", "darkorange")
+
+#InvSimpson normal weight
+
+sample_data(DummyN)$GAD <- relevel(sample_data(DummyN)$GAD, ref = "Term")
+Rich_P <- plot_richness(DummyN, x="GAD", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Inv_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD") + theme(legend.position='none') + scale_fill_manual(values=GADcol) +  annotate("text", label =  paste("P=", IGAD_Normal), x=1.5, y =5, size = 6, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter()
+IST1DMicroP <- Inv_Plot1
+
+#InvSimpson Obese
+sample_data(DummyOb)$GAD <- relevel(sample_data(DummyOb)$GAD, ref = "Term")
+Rich_P <- plot_richness(DummyOb, x="GAD", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=12), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD")  + ggtitle( paste("Obese") ) + scale_fill_manual(values=GADcol) +  annotate("text", label = paste("P=",IGAD_Ob), x=1.5, y =5, size = 4, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter() + theme(legend.position='none') 
+IST1DMicroP_Ob <- Inv_Plot3
+```
+
+###Beta diversity
+
+Interactions with parity and BMI were tested.
+
+```{r BetaTest, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D <- phyloseq::distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$GAD <- as.factor(Meta_df$GAD)
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta2_df <- as.data.frame(Meta2)
+Meta2_df$SeqRun <- as.factor(Meta2_df$SeqRun)
+Meta2_df$Parity <- as.factor(Meta2_df$Parity)
+Meta2_df$GAD <- as.factor(Meta2_df$GAD)
+Meta2_df$BMI <- as.numeric(Meta2_df$BMI)
+#CATEGORIZE BMI FOR TEST
+Meta2_df$BMI_Cat <- cut(Meta2_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+Meta2_df$BMI_Cat <- as.factor(Meta2_df$BMI_Cat)
+
+AdonisR <- adonis2(D2 ~  SeqRun + Parity*GAD + BMI*GAD, strata=Meta2_df$motherid, data=Meta2_df) # Interactions no significant, neither GAD
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[3], 4)
+## 95% CI
+CI.Rsq(0.002, n=145, k=6)
+}
+```
+
+###Differential abundance analysis
+
+```{r DAPDMicro, echo=FALSE}
+for(i in 1:5){
+  VecOF <- VecO[[i]]
+  Counts <- as.data.frame(t(otu_table(VecOF)))
+  # Metadata format
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecOF)))
+  Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+  contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+  Meta_df$Parity <- as.factor(Meta_df$Parity)
+  contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+  Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+  contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+  Meta_df$GAD <- as.factor(Meta_df$GAD)
+  contrasts(Meta_df$GAD) <- contr.sum(levels(Meta_df$GAD))
+  
+  #Design matrix
+  design <- model.matrix(~0 + GAD + Parity + SeqRun, data=Meta_df)
+  
+  #Note: No prevalence filter was applied here before analysis since DA taxa detected.
+  dge <- DGEList(Counts, group= Meta_df$GAD)
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+  
+  #Contrast matrix
+  cont <- makeContrasts(GA=GADPremature-GADTerm, levels=design)
+  
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  #top table of results
+  TT <- topTable(fitc, coef = "GA", n=Inf) #, confint=TRUE is added to obtain confidence intervals for the logFC
+  TO <- TT
+  TV<- vector()
+  Mean <- data.frame(fit$coef[rownames(TO),c(1,2)])
+  colnames(Mean)[1:2] <- c("MEAN:Premature", "MEAN:Term")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- data.frame(SE[rownames(TO),c(1,2)])
+  colnames(SE)[1:2] <- c("SE:Premature", "SE:Term")
+  MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+  MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+  if(length(MeanSE$adj.P.Val)> 0){
+  for(n in 1:length(rownames(MeanSE))){
+    TV[n] <- tax_table(VecO[[i]])[rownames(MeanSE)[n],Tax[i]]  
+  }
+  rownames(MeanSE) <- TV
+  MeanSE$Taxa <- rownames(MeanSE)
+  
+    GADcol <- c("darkgreen", "darkorange")
+    #For plot
+    MeanSE$Taxa <- rownames(MeanSE)
+    X <- melt(MeanSE[,3:8], "Taxa")
+    Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+    Z <- cbind(X[1], Y, X[3])
+    Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("Premature", length(MeanSE$adj.P.Val))
+    Z2 <- dcast(Z, Taxa + X2 ~ X1)
+    Z2$adj.P.Val <- round(Z2$adj.P.Val, 2)
+    colnames(Z2)[2] <- "Delivery status"
+  }
+    #Since we know that differences were detected only at species and phylum taxonomic levels, we do these steps
+    if(i==1){
+    ZS <- Z2  
+    }
+    if(i==5){
+      ZA <- rbind(ZS, Z2)  
+    }
+} 
+    #Prepare for plotting
+    ZA$Taxa <- as.factor(ZA$Taxa)
+    ZA$Taxa <- relevel(ZA$Taxa, ref="Lactobacillus_reuteri*")
+    ZA$`Delivery status` <- relevel(ZA$`Delivery status`, ref="Term")
+    ZA$Taxa <- sub('_', ' ', ZA$Taxa)
+    ZA$Taxa <- stringr::str_replace(ZA$Taxa, '\\*', '')
+    ZA$adj.P.Val[c(1,3)] <- paste(c("P=", "P="),ZA$adj.P.Val[c(1,3)], sep="")
+
+    #Plot
+    pd <- position_dodge(0.5)
+    p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`Delivery status`, label=adj.P.Val))
+    DAResultsPD_MicroP <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y =element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x = element_text(angle = 45, hjust=1, size=16, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none')
+   
+```
+
+###Composed plots
+
+```{r PlotsPD, echo=FALSE}
+F3<-  ggarrange(IST1DMicroP, DAResultsPD_MicroP, ncol = 2, labels = c("A", "B"), font.label = list(size = 18)) #, common.legend = TRUE (11, 5.5)
+F3
+```
+
+##Preeclampsia (PE)
+
+###Description of samples used in this analysis
+
+```{r Imp.format, echo=FALSE}
+X <- load(file="$HOME/MicrobiomeObjectsWHLAsamples.RData")
+#"Vec2"  "VecO"
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec2[[i]] <- phyloseq(otu_table(Vec2[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec2[[i]]), phy_tree(Vec2[[i]]))
+Vec2[[i]] <- subset_samples(Vec2[[i]], T1Dstatus=="T1D")
+Vec2[[i]] <- subset_samples(Vec2[[i]], Any.PE!="NA")
+}
+for(i in 1:5){
+VecMy[[i]] <- phyloseq(otu_table(VecMy[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecMy[[i]]), phy_tree(VecMy[[i]]))
+VecMy[[i]] <- subset_samples(VecMy[[i]], T1Dstatus=="T1D")
+VecMy[[i]] <- subset_samples(VecMy[[i]], Any.PE!="NA")
+}
+for(i in 1:5){
+VecO[[i]] <- phyloseq(otu_table(VecO[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecO[[i]]), phy_tree(VecO[[i]]))
+VecO[[i]] <- subset_samples(VecO[[i]], T1Dstatus=="T1D")
+VecO[[i]] <- subset_samples(VecO[[i]], Any.PE!="NA")
+}
+
+TB <- table(sample_data(Vec2[[1]])$Any.PE, sample_data(Vec2[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have preeclampsia there are a total of 158 samples for which we have the preeclampsia status. Only samples from women with T1D will be analysed as only women with T1D status had preeclampsia. The samples are distributed as follows:
+
+```{r, Count, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+0: women without preeclampsia and 1: women with preeclampsia.
+
+###Alpha diversity
+
+```{r, AlphaAge, echo=FALSE}
+OTUVag_RA <- Vec2[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+PREcol <- c("cyan4", "deeppink3")
+```
+
+```{r AlphaTest, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$Any.PE <- as.factor(sample_data(OTUVag_RA)$Any.PE)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$Any.PE <- factor(DivCal_R_df$Any.PE)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+## Observed Richness
+
+ob_PE <- glmer.nb(Observed ~ BMI_Cat*Any.PE +  Parity*Any.PE + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+ResObs <- Anova(ob_PE)
+RPE <- round(ResObs$`Pr(>Chisq)`[2], 2)
+
+Dummy <- subset_samples(Dummy, Any.PE!="NA")
+Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label =  paste("P=", RPE), x=1.5, y =38, size = 4, colour = "black") + theme(legend.position='none')
+
+# InvSimpson
+in_PE <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|motherid)  + (1|SeqRun), data=DivCal_R_df)
+ResObs3 <- Anova(in_PE)
+
+#### FOR CONTRASTS OF PE WITHIN A EACH BMI CATEGORIES  ##########################################
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="Underweight")
+DivCal_R_df$BMI_Cat <- droplevels(DivCal_R_df$BMI_Cat, exclude = "Underweight")
+DivCal_R_df$BMIPE <- with(DivCal_R_df, interaction(BMI_Cat, Any.PE, sep = "x"))
+in_PE <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity + BMIPE, data=DivCal_R_df)
+marginal = emmeans(in_PE, ~ BMIPE)
+##Contrast the levels I want
+Contrasts = list(PENormal=c(1,0,0,-1,0,0), PEOver=c(0,1,0,0,-1,0), PEObese=c(0,0,1,0,0,-1))
+ResCat <- contrast(marginal, Contrasts, adjust="none") 
+ResIn <- data.frame(ResCat)
+IPE_Normal <- round(ResIn$p.value[1], 3)
+IPE_Over <- round(ResIn$p.value[2], 3)
+
+#CATEGORIZE BMI FOR PLOT
+X <- cut(sample_data(Dummy)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+sample_data(Dummy)$BMI_Cat <- as.factor(X)
+Dummy <- subset_samples(Dummy, BMI_Cat!="NA")
+DummyN <- subset_samples(Dummy, BMI_Cat=="Normal")
+DummyOv <- subset_samples(Dummy, BMI_Cat=="Overweight")
+DummyOb <- subset_samples(Dummy, BMI_Cat=="Obese")
+
+#InvSimpson normal weight
+Rich_P <- plot_richness(DummyN, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Inv_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=", IPE_Normal), x=1.5, y =5.5, size = 6, colour = "black") + theme(legend.position='none')
+
+#InvSimpson Overweight
+Rich_P <- plot_richness(DummyOv, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=", IPE_Over), x=1.5, y =5, size = 6, colour = "black")  + theme(legend.position='none')
+```
+
+###Beta diversity
+
+```{r BetaTest, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, Any.PE!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot2, HLA!="NA")
+
+D <- distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$BMI <- as.numeric(Meta_df$BMI)
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+Meta_df$motherid <- as.factor(Meta_df$motherid)
+Meta_df$HLA <- as.factor(Meta_df$HLA)
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$SeqRun <- as.factor(Meta_df2$SeqRun)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$Any.PE <- as.factor(Meta_df2$Any.PE)
+Meta_df2$motherid <- as.factor(Meta_df2$motherid)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+Meta_df2$HLA <- as.factor(Meta_df2$HLA)
+
+#testing interaction between parity and BMI with Preeclampsia --> They were not significant
+AdonisR <- adonis2(D2 ~  SeqRun +  Parity*Any.PE + BMI*Any.PE + HLA*Any.PE, strata=Meta_df2$motherid,  data=Meta_df2)
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[3], 2)
+## 95% CI
+CI.Rsq(0.005, n=154, k=8)
+
+sample_data(OTU_Plot)$Any.PE <- as.factor(sample_data(OTU_Plot)$Any.PE)
+ordination_OTU<-ordinate(OTU_Plot, method="CAP", distance="bray", ~  Any.PE)
+p_OTU12<-plot_ordination(OTU_Plot, ordination_OTU, type="samples",  color="Any.PE")
+PlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=15), axis.text.x=element_text(size=15), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) +  annotate("text", label = paste("P=",A2Res), x=2.5, y =1.7, size = 4, colour = "black") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)   + theme(legend.position='none')
+
+}
+gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4]], PlotList[[5]], ncol = 3)
+```
+
+###Differential abundance analysis
+
+```{r DAPEMicro, echo=FALSE}
+for(i in 1:5){
+VecOFilt <- Vec2[[i]]
+VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
+VecOFilt <- subset_samples(VecOFilt, T1Dstatus=="T1D")
+VecOFilt <- subset_samples(VecOFilt, Any.PE!="NA")
+
+Counts <- as.data.frame(t(otu_table(VecOFilt)))
+# Metadata
+Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+contrasts(Meta_df$Any.PE) <- contr.sum(levels(Meta_df$Any.PE))
+
+design <- model.matrix(~0 + Any.PE + Parity + SeqRun, data=Meta_df) 
+
+dge <- DGEList(Counts, group= Meta_df$Any.PE)
+
+#Prevalence filter (no DA taxa detected when no filter was applied)
+M <- dge$counts
+M[M>0] <-1
+keepP <- rowSums(M) > 79 #79 is based on 50% of the samples (158)
+dge <- dge[keepP,,keep.lib.sizes=FALSE]
+dge <- dge[,which(!dge$samples$lib.size == 0)]
+# Metadata
+dgeN <- colnames(dge$counts)
+VecF <- prune_samples(as.character(dgeN), VecOFilt)
+Counts <- as.data.frame(otu_table(VecF))
+Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+
+dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+
+## Contrast preeclampsia_levels 
+cont <- makeContrasts(PE=Any.PE0 - Any.PE1, levels=design)
+fitc <- contrasts.fit(fit, contrasts = cont)
+fitc <- eBayes(fitc, robust=TRUE)
+DT<- decideTests(fitc)
+summary(DT)
+
+TT <- topTable(fitc, coef = "PE", n=Inf) #, confint=TRUE is added to obtain confidence intervals for the logFC
+TO <- TT
+TV<- vector()
+Mean <- data.frame(fit$coef[rownames(TO),c(1,2)])
+colnames(Mean)[1:2] <- c("MEAN:No Preeclampsia", "MEAN:Preeclampsia")
+SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+SE <- data.frame(SE[rownames(TO),c(1,2)])
+colnames(SE)[1:2] <- c("SE:No Preeclampsia", "SE:Preeclampsia")
+MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+
+if(nrow(MeanSE)>0){
+for(n in 1:length(rownames(MeanSE))){
+TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+}
+rownames(MeanSE) <- TV
+MeanSE$Taxa <- rownames(MeanSE)
+X <- melt(MeanSE[,3:8], "Taxa")
+Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+Z <- cbind(X[1], Y, X[3])
+Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("Preeclampsia", length(MeanSE$adj.P.Val))
+Z2 <- dcast(Z, Taxa + X2 ~ X1)
+Z2$adj.P.Val <- round(Z2$adj.P.Val, 2)
+colnames(Z2)[2] <- "Preeclampsia status"
+
+if(i==1){
+Zspe <- Z2  
+}
+if(i==3){
+Zfam <- Z2  
+}
+if(i==4){
+ZA <-  rbind(Zspe, Zfam, Z2) 
+}
+}
+}
+ZA$Taxa <- as.factor(ZA$Taxa)
+ZA$Taxa <- sub('_', ' ', ZA$Taxa)
+ZA$adj.P.Val[c(2,4,6)] <- paste(c("P=", "P=", "P="),ZA$adj.P.Val[c(2,4,6)], sep="")
+
+Lv <- c("Gardnerella vaginalis", "Bifidobacteriaceae", "Bifidobacteriales")
+ZA$Taxa <- factor(ZA$Taxa, levels=Lv)
+p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`Preeclampsia status`, label=adj.P.Val))
+pd <- position_dodge(0.5)
+DAMicroPE <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x = element_text(angle = 45, hjust=1, size=16, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none')
+```
+
+###Composed plots
+
+```{r PlotsPD, echo=FALSE}
+Plot2 <- ggarrange(Inv_Plot2, Inv_Plot3, ncol=2, labels = c("A", "B"), font.label = list(size = 18))
+Plot3 <- ggarrange(DAMicroPE, ncol=1, labels = c("C"), font.label = list(size = 18))
+F4 <- ggarrange(Plot2, Plot3, ncol=1, heights = c(0.5, 0.7))
+```
+
+##Genitourinary tract infection (GUTI)
+
+###Description of samples used in this analysis
+
+```{r Imp.format, echo=FALSE}
+X <- load(file="/$HOME/MicrobiomeObjectsWHLAsamples.RData")
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec2[[i]] <- phyloseq(otu_table(Vec2[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec2[[i]]), phy_tree(Vec2[[i]]))
+Vec2[[i]] <- subset_samples(Vec2[[i]], GU.tract.infection!="NA")
+}
+for(i in 1:5){
+VecMy[[i]] <- phyloseq(otu_table(VecMy[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecMy[[i]]), phy_tree(VecMy[[i]]))
+VecMy[[i]] <- subset_samples(VecMy[[i]], GU.tract.infection!="NA")
+
+}
+for(i in 1:5){
+VecO[[i]] <- phyloseq(otu_table(VecO[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecO[[i]]), phy_tree(VecO[[i]]))
+VecO[[i]] <- subset_samples(VecO[[i]], GU.tract.infection!="NA")
+
+}
+TB <- table(sample_data(Vec2[[1]])$GU.tract.infection, sample_data(Vec2[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have genitourinary tract infections [GUTI] there are a total of 284 samples for which we have the GUTI status. The samples are distributed between women with and without T1D as follows:
+
+```{r, Count, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+0: women without GUTI and 1: women with GUTI
+
+###Alpha diversity
+
+```{r, AlphaAge, echo=FALSE}
+OTUVag_RA <- Vec2[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GUTIcol <- c("deepskyblue2", "darkmagenta")
+```
+
+Pale blue: No GUTI; Magenta: GUTI
+
+```{r AlphaTest, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+Dummy <- OTUVag_RA
+sample_data(Dummy)$GUTI <- as.factor(sample_data(Dummy)$GU.tract.infection)
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GUTI <- factor(DivCal_R_df$GUTI)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+ob_GUTI <- glmer.nb(Observed ~  BMI_Cat*GUTI + Parity*GUTI + T1Dstatus*GUTI + (1|motherid) + (1|SeqRun), data=DivCal_R_df) 
+ResObs <- Anova(ob_GUTI)
+RGUTI <- round(ResObs$`Pr(>Chisq)`[2], 3)
+
+Rich_P <- plot_richness(Dummy, x="GUTI", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GUTI), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GUTI") + geom_jitter()  +  annotate("text", label = paste("P=", RGUTI), x=1.5, y =40, size = 4, colour = "black") + theme(legend.position='none') + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)
+
+# InvSimpson
+in_GUTI <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ BMI_Cat*GUTI + Parity*GUTI  + T1Dstatus*GUTI + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+ResObs3 <- Anova(in_GUTI)
+IRGUTI <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+
+Rich_P <- plot_richness(Dummy, x="GUTI", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GUTI), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GUTI") + geom_jitter() +  annotate("text", label = paste("P=", IRGUTI), x=1.5, y =8, size = 4, colour = "black")   + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol) + theme(legend.position='none')
+
+gridExtra::grid.arrange(Rich_Plot1, Rich_Plot2, ncol = 2)
+```
+
+###Beta diversity
+
+```{r BetaTest, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+sample_data(OTU_Plot)$GUTI <- as.factor(sample_data(OTU_Plot)$GU.tract.infection)
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$SeqRun <- as.factor(Meta_df2$SeqRun)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$GUTI <- as.factor(Meta_df2$GUTI)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+Meta_df2$motherid <- as.factor(Meta_df2$motherid)
+Meta_df2$T1Dstatus <- as.factor(Meta_df2$T1Dstatus)
+
+#testing interaction between T1Dstatus, parity and GUTI with GUTI  --> not significant
+AdonisR <- adonis2(D2 ~  SeqRun + Parity*GUTI + BMI*GUTI + T1Dstatus*GUTI, strata=Meta_df2$motherid, data=Meta_df2) 
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[3], 2)
+
+sample_data(OTU_Plot2)$GUTI <- as.factor(sample_data(OTU_Plot2)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot2, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot2, ordination_OTU, type="samples",  color="GUTI")
+PlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=15), axis.text.x=element_text(size=15), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15))  +  annotate("text", label = paste("P=", IRGUTI), x=1.5, y =1.5, size = 4, colour = "black")  + theme(legend.position='none')  + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol) 
+}
+gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4]], PlotList[[5]], ncol = 2)
+```
+
+###Differential abundance analysis
+
+```{r DAGUTIMicro, echo=FALSE}
+for(i in 1:5){
+  VecOFilt <- VecO[[i]]
+  VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
+  sample_data(VecOFilt)$GUTI <- as.factor(sample_data(VecOFilt)$GU.tract.infection)
+  Counts <- as.data.frame(t(otu_table(VecOFilt)))
+  # Metadata
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+  Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+  contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+  Meta_df$Parity <- as.factor(Meta_df$Parity)
+  contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+  Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+  contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+  Meta_df$GUTI <- as.factor(Meta_df$GUTI)
+  contrasts(Meta_df$GUTI) <- contr.sum(levels(Meta_df$GUTI))
+  Meta_df$T1Dstatus <- factor(Meta_df$T1Dstatus)
+  levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D")
+  contrasts(Meta_df$T1Dstatus) <- contr.sum(levels(Meta_df$T1Dstatus))
+  Meta_df$GUTIT1D <-as.factor(paste(Meta_df$GUTI, Meta_df$T1Dstatus, sep=".")) #Composed factor to test differences due to GUTI within T1D status levels
+  
+  design <- model.matrix(~0 + GUTIT1D + Parity + SeqRun, data=Meta_df)
+  
+  dge <- DGEList(Counts, group= Meta_df$GUTIT1D)
+  
+  #Prevalence filter
+  M <- dge$counts
+  M[M>0] <-1
+  keepP <- rowSums(M) > 140 #140 is about 50% of the samples (284) 
+  dge <- dge[keepP,,keep.lib.sizes=FALSE]
+  dge <- dge[,which(!dge$samples$lib.size == 0)]
+  # Metadata
+  dgeN <- colnames(dge$counts)
+  VecF <- prune_samples(as.character(dgeN), VecOFilt)
+  Counts <- as.data.frame(otu_table(VecF))
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+  Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+  contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+  Meta_df$Parity <- as.factor(Meta_df$Parity)
+  contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+  Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+  contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+  Meta_df$GUTI <- as.factor(Meta_df$GUTI)
+  contrasts(Meta_df$GUTI) <- contr.sum(levels(Meta_df$GUTI))
+  Meta_df$T1Dstatus <- factor(Meta_df$T1Dstatus)
+  levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D")
+  contrasts(Meta_df$T1Dstatus) <- contr.sum(levels(Meta_df$T1Dstatus))
+  Meta_df$GUTIT1D <-as.factor(paste(Meta_df$GUTI, Meta_df$T1Dstatus, sep="."))
+  design <- model.matrix(~0 + GUTIT1D + Parity + SeqRun, data=Meta_df)
+  
+  
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+  
+  ## Contrast GUTI_levels in general and within T1D status
+  cont <- makeContrasts(GUTI=((GUTIT1D0.NonT1D + GUTIT1D0.T1D)/2 - (GUTIT1D1.NonT1D + GUTIT1D1.T1D)/2), GUTIT1D= GUTIT1D0.T1D - GUTIT1D1.T1D, GUTINT1D= GUTIT1D0.NonT1D - GUTIT1D1.NonT1D, levels=design)
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  #Results top table for GUTI in general
+  TT <- topTable(fitc, coef = "GUTI", n=Inf)
+  TO <- TT
+  TV<- vector()
+  Mean <- cbind(data.frame(rowMeans(fit$coef[rownames(TO),1:2])), data.frame(rowMeans(fit$coef[rownames(TO),3:4])))
+  colnames(Mean)[1:2] <- c("MEAN:No GUTI", "MEAN:GUTI")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- cbind(data.frame(rowMeans(SE[rownames(TO),1:2])), data.frame(rowMeans(SE[rownames(TO),3:4])))
+  colnames(SE)[1:2] <- c("SE:No GUTI", "SE:GUTI")
+  MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+  MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+  
+  
+  if(nrow(MeanSE)>0){
+    for(n in 1:length(rownames(MeanSE))){
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+    }
+    rownames(MeanSE) <- TV
+    
+    #For plot
+    MeanSE$Taxa <- rownames(MeanSE)
+    X <- melt(MeanSE[,3:8], "Taxa")
+    Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+    Z <- cbind(X[1], Y, X[3])
+    Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("GUTI", length(MeanSE$adj.P.Val))
+    Z2 <- dcast(Z, Taxa + X2 ~ X1)
+    Z2$adj.P.Val <- round(Z2$adj.P.Val, 2)
+    colnames(Z2)[2] <- "GUTI status"
+    if(i==1){
+    Zspe <- Z2
+    }
+    if(i==2){
+    Zgen <- Z2
+    }
+    if(i==4){
+    Zor <- Z2
+    }
+  }
+  
+#Results from DA within T1D and non-T1D women (No significant differences in specific and different taxa (from the ones detected in all women) due to GUTI were found when samples within T1D status were analysed)
+##Women with T1D  
+TT <- topTable(fitc, coef = "GUTIT1D", n=Inf)
+##Women without T1D
+TT <- topTable(fitc, coef = "GUTINT1D", n=Inf)
+}
+  #For plot
+    ZA <- rbind(Zspe, Zgen, Zor)
+    ZA$Taxa <- as.factor(ZA$Taxa)
+    ZA$Taxa <- factor(ZA$Taxa, levels=ZA$Taxa[duplicated(ZA$Taxa)])
+    ZA$`GUTI status` <- relevel(ZA$`GUTI status`, ref="No GUTI")
+  #Plotting
+    pd <- position_dodge(0.5)
+    p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`GUTI status`, label=adj.P.Val))
+    DAMicroGUTI <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=4, check_overlap = TRUE)+ theme(axis.text.y =element_text(size=14), axis.text.x = element_text(angle = 45, hjust=1, size=12, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)   + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1))  + ylab("log2-transformed fitted values") + theme(legend.position='none') 
+    plot(DAMicroGUTI)
+```
+
+##Group B Streptococcus infection (GBSI)
+
+###Description of samples used in this analysis
+
+```{r Imp.format, echo=FALSE}
+X <- load(file="/$HOME/MicrobiomeObjectsWHLAsamples.RData")
+#"Vec2"  "VecO"
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec2[[i]] <- phyloseq(otu_table(Vec2[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec2[[i]]), phy_tree(Vec2[[i]]))
+Vec2[[i]] <- subset_samples(Vec2[[i]], GBS!="NA")
+}
+for(i in 1:5){
+VecMy[[i]] <- phyloseq(otu_table(VecMy[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecMy[[i]]), phy_tree(VecMy[[i]]))
+VecMy[[i]] <- subset_samples(VecMy[[i]], GBS!="NA")
+
+}
+for(i in 1:5){
+VecO[[i]] <- phyloseq(otu_table(VecO[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecO[[i]]), phy_tree(VecO[[i]]))
+VecO[[i]] <- subset_samples(VecO[[i]], GBS!="NA")
+}
+T1Dcol <- c("red", "blue")
+
+TB <- table(sample_data(Vec2[[1]])$GBS, sample_data(Vec2[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have Group B streptococcus [GBS] there are a total of 187 samples for which we have the GBS status. The samples are distributed between women with and without T1D as follows:
+
+```{r, Count, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+0: women without GBS and 1: women with GBS
+
+###Alpha diversity
+
+```{r, AlphaGBSImi, echo=FALSE}
+OTUVag_RA <- Vec2[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GBScol <- c("cornflowerblue", "darkgoldenrod1")
+```
+
+Pale blue: No GBS; Gold: GBS.
+
+```{r AlphaTestGBSImi, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$GBS <- as.factor(sample_data(OTUVag_RA)$GBS)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$T1Dstatus <- factor(DivCal_R_df$T1Dstatus)
+DivCal_R_df <- subset(DivCal_R_df, GBS!="NA")
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+##Observed richness
+ob_GBS <- glmer.nb(Observed ~ T1Dstatus*GBS + Parity*GBS + BMI_Cat*GBS + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
+ResObs <- Anova(ob_GBS)
+RGBS <- round(ResObs$`Pr(>Chisq)`[2], 2)
+
+Dummy <- subset_samples(Dummy, GBS!="NA")
+Rich_P <- plot_richness(Dummy, x="GBS", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GBS), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GBS") + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol) + geom_jitter() +  annotate("text", label = paste("P=", RGBS), x=1.5, y =40, size = 4, colour = "black") + theme(legend.position='none')
+
+# InvSimpson
+
+in_GBS <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ T1Dstatus*GBS + BMI_Cat*GBS + Parity*GBS + (1|motherid)  + (1|SeqRun), data=DivCal_R_df)
+ResObs3 <- Anova(in_GBS)
+IRGBS <- round(ResObs3$`Pr(>Chisq)`[2], 4)
+
+Rich_P <- plot_richness(Dummy, x="GBS", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GBS), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=11), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GBS") + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol) + geom_jitter() +  annotate("text", label = paste("P=0.0009"), x=1.5, y =5, size = 4, colour = "black") + theme(legend.position='none') + ylim(min=0, max=7.5)
+cat('\n')
+
+gridExtra::grid.arrange(Rich_Plot1, Rich_Plot2, ncol = 2)
+```
+
+###Beta diversity
+
+```{r BetaTestGBSImi, echo=FALSE, fig.height=20, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, GBS!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$SeqRun <- as.factor(Meta_df2$SeqRun)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$GBS <- as.factor(Meta_df2$GBS)
+Meta_df2$BMI <- as.factor(Meta_df2$BMI)
+Meta_df2$motherid <- as.factor(Meta_df2$motherid)
+Meta_df2$T1Dstatus <- as.factor(Meta_df2$T1Dstatus)
+
+#testing interaction between T1Dstatus, parity, BMI with GBS 
+AdonisR <- adonis2(D2 ~  SeqRun + T1Dstatus*GBS + Parity*GBS + BMI*GBS, strata=Meta_df2$motherid,  data=Meta_df2)
+print(AdonisR)
+}
+```
+
+###Differential abundance analysis
+
+```{r DAGBSMicro, echo=FALSE}
+for(i in 1:5){
+VecOFilt <- Vec2[[i]]
+VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
+VecOFilt <- subset_samples(VecOFilt, GBS!="NA")
+  
+Counts <- as.data.frame(t(otu_table(VecOFilt)))
+# Metadata
+Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+Meta_df$GBS <- as.factor(Meta_df$GBS)
+contrasts(Meta_df$GBS) <- contr.sum(levels(Meta_df$GBS))
+Meta_df$T1Dstatus <- factor(Meta_df$T1Dstatus)
+levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D") 
+Meta_df$GBS_T1Dstatus <- as.factor(paste(Meta_df$GBS,Meta_df$T1Dstatus, sep="."))
+contrasts(Meta_df$GBS_T1Dstatus) <- contr.sum(levels(Meta_df$GBS_T1Dstatus))
+
+design <- model.matrix(~0 + GBS_T1Dstatus + Parity + SeqRun, data=Meta_df) #Since in comparison to the fungal data, here we have more samples, we included the factor of GBS combined with T1D status because even though the interaction was not significant in the beta diversity analysis we wanted to explore differences in GBS within levels of T1D status from the beginning.
+  
+dge <- DGEList(Counts, group= Meta_df$GBS_T1Dstatus)
+  
+dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+  
+## Contrast GBS_levels 
+cont <- makeContrasts(GBS=(GBS_T1Dstatus0.NonT1D + GBS_T1Dstatus0.T1D)/2 - (GBS_T1Dstatus1.NonT1D + GBS_T1Dstatus1.T1D)/2, levels=design)
+  
+fitc <- contrasts.fit(fit, contrasts = cont)
+fitc <- eBayes(fitc, robust=TRUE)
+DT<- decideTests(fitc)
+summary(DT)
+  
+TT <- topTable(fitc, coef = "GBS", n=Inf)
+TO <- TT
+TV<- vector()
+Mean <- cbind(data.frame(rowMeans(fit$coef[rownames(TO),1:2])), data.frame(rowMeans(fit$coef[rownames(TO),3:4])))
+colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+SE <- cbind(data.frame(rowMeans(SE[rownames(TO),1:2])), data.frame(rowMeans(SE[rownames(TO),3:4])))
+colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+  
+  for(n in 1:length(rownames(MeanSE))){
+    TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+  }
+  rownames(MeanSE) <- TV
+    #
+#For plot (Since there where only significantly DA taxa at species level, the plotting was restricted to species level)
+if(i==1){
+MeanSE$Taxa <- rownames(MeanSE)
+MeanSE$Taxa <- sub('_', ' ', MeanSE$Taxa)
+MeanSE$Taxa <- stringr::str_replace(MeanSE$Taxa, '\\*', '')
+MeanSE$Taxa[3] <- c("Peptoniphilus harei")
+  
+X <- melt(MeanSE[,3:8], "Taxa")
+Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+Z <- cbind(X[1], Y, X[3])
+Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("GBS", length(MeanSE$adj.P.Val))
+Z2 <- dcast(Z, Taxa + X2 ~ X1)
+Z2$adj.P.Val <- round(Z2$adj.P.Val, 3)
+colnames(Z2)[2] <- "GBS status"
+    
+Z2$Taxa[9:10] <- c("Peptoniphilus harei", "Peptoniphilus harei")
+Z2$Taxa <- as.factor(Z2$Taxa)
+Z2$Taxa <- factor(Z2$Taxa, levels=MeanSE$Taxa)
+Z2$`GBS status` <- relevel(Z2$`GBS status`, ref="No GBS")
+Z2$Taxa[9:10] <- c("Peptoniphilus harei", "Peptoniphilus harei")
+  
+pd <- position_dodge(0.5)
+p2 <- ggplot(Z2, aes(x=Taxa, y=MEAN, colour=`GBS status`, label=adj.P.Val))
+DAMicroGBSN <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + geom_point(position=pd, size=3)  + theme(axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x = element_text(angle = 45, hjust=1, size=12, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol) + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=3.5, check_overlap = TRUE) + ylab("log2-transformed fitted values") + theme(legend.position='none') 
+}
+  ##In women with T1D
+    
+    TT <- topTable(fitc, coef = "GBST1D", n=Inf)
+    TO <- TT
+    TV<- vector()
+    Mean <- data.frame(fit$coef[rownames(TO),c(2,4)])
+    colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+    SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+    SE <- data.frame(SE[rownames(TO),c(2,4)])
+    colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+    MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+    MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+    
+    for(n in 1:length(rownames(MeanSE))){
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+    }
+    rownames(MeanSE) <- TV
+
+
+##In women without T1D
+
+TT <- topTable(fitc, coef = "GBSNT1D", n=Inf)
+TO <- TT
+TV<- vector()
+Mean <- data.frame(fit$coef[rownames(TO),c(1,3)])
+colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+SE <- data.frame(SE[rownames(TO),c(1,3)])
+colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+
+for(n in 1:length(rownames(MeanSE))){
+  TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+}
+rownames(MeanSE) <- TV
+}
+```
+
+#Vaginal mycobiome
+
+##Premature delivery (PD)
+
+###Description of samples used in this analysis
+
+```{r MycoPD, echo=FALSE, fig.height=12, fig.width=16}
+for(i in 1:5){
+Vec[[i]] <- phyloseq(otu_table(Vec[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec[[i]]), phy_tree(Vec[[i]]))
+Vec[[i]] <- subset_samples(Vec[[i]], GA_at_Delivery_w!="NA")
+X <- cut(sample_data(Vec[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Vec[[i]])$GAD <- X
+  sample_data(Vec[[i]])$GAD <- as.factor(sample_data(Vec[[i]])$GAD)
+  sample_data(Vec[[i]])$GAD_MOD <- paste(sample_data(Vec[[i]])$GAD, sample_data(Vec[[i]])$MOD, sep=".")
+  Vec[[i]] <- prune_samples(sample_sums(Vec[[i]]) > 5000, Vec[[i]])
+  Vec[[i]] <- prune_taxa(taxa_sums(Vec[[i]]) > 30, Vec[[i]])
+  Vec[[i]] <- subset_samples(Vec[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Vec[[i]] <- subset_samples(Vec[[i]], T1Dstatus=="T1D")
+
+}
+for(i in 1:5){
+Vec3[[i]] <- phyloseq(otu_table(Vec3[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec3[[i]]), phy_tree(Vec3[[i]]))
+Vec3[[i]] <- subset_samples(Vec3[[i]], GA_at_Delivery_w!="NA")
+X <- cut(sample_data(Vec3[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Vec3[[i]])$GAD <- X
+  sample_data(Vec3[[i]])$GAD <- as.factor(sample_data(Vec3[[i]])$GAD)
+  sample_data(Vec3[[i]])$GAD_MOD <- paste(sample_data(Vec3[[i]])$GAD, sample_data(Vec3[[i]])$MOD, sep=".")
+  Vec3[[i]] <- prune_samples(sample_sums(Vec3[[i]]) > 5000, Vec3[[i]])
+  Vec3[[i]] <- prune_taxa(taxa_sums(Vec3[[i]]) > 30, Vec3[[i]])
+  Vec3[[i]] <- subset_samples(Vec3[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Vec3[[i]] <- subset_samples(Vec3[[i]], T1Dstatus=="T1D")
+
+}
+for(i in 1:5){
+VecP[[i]] <- phyloseq(otu_table(VecP[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecP[[i]]), phy_tree(VecP[[i]]))
+VecP[[i]] <- subset_samples(VecP[[i]], GA_at_Delivery_w!="NA")
+X <- cut(sample_data(VecP[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(VecP[[i]])$GAD <- X
+  sample_data(VecP[[i]])$GAD <- as.factor(sample_data(VecP[[i]])$GAD)
+  sample_data(VecP[[i]])$GAD_MOD <- paste(sample_data(VecP[[i]])$GAD, sample_data(VecP[[i]])$MOD, sep=".")
+  VecP[[i]] <- prune_samples(sample_sums(VecP[[i]]) > 5000, VecP[[i]])
+  VecP[[i]] <- prune_taxa(taxa_sums(VecP[[i]]) > 30, VecP[[i]])
+  VecP[[i]] <- subset_samples(VecP[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  VecP[[i]] <- subset_samples(VecP[[i]], T1Dstatus=="T1D")
+
+}
+
+X <- cut(sample_data(Vec3[[1]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(Vec3[[1]])$GAD <- X
+sample_data(Vec3[[1]])$GAD <- as.factor(sample_data(Vec3[[1]])$GAD)
+TB <- table(sample_data(Vec3[[1]])$T1Dstatus, sample_data(Vec3[[1]])$GAD)
+```
+
+For analysing the vaginal microbiome of women who had premature deliveries vs. women who had term deliveries, only women with T1D were analysed because the number of women without T1D who had premature deliveries was small (n=3?) there are a total of 144 samples distributed as follows:
+
+```{r, Count2PDmy, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+###Alpha diversity
+
+```{r, AlphaPDmy, echo=FALSE}
+OTUVag_RA <- Vec3[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GADcol <- c("darkgreen", "darkorange")
+```
+
+Green: Premature [<37 weeks]; Orange: Term [37-40 weeks]
+
+```{r AlphaTestPDmy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+Dummy <- OTUVag_RA
+X <- cut(sample_data(Dummy)$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(Dummy)$GAD <- X
+sample_data(Dummy)$GAD <- as.factor(sample_data(Dummy)$GAD)
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GAD <- factor(DivCal_R_df$GAD)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+#Observed richness
+ob_GAD <- glm.nb(Observed ~ Parity*GAD + BMI_Cat*GAD, data=DivCal_R_df) #Removing interactions from the model (because they are not significant) does not produce a significant difference in the variable of interest, it is still NOT significant
+ResObs <- Anova(ob_GAD)
+RGAD <- round(ResObs$`Pr(>Chisq)`[2], 2)
+
+Dummy <- subset_samples(Dummy, GAD!="NA")
+Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GAD") + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol) + geom_jitter() +  annotate("text", label = paste("P=", RGAD), x=1.5, y =25, size = 4, colour = "black") + theme(legend.position='none')
+
+#InvSimpson
+in_GAD <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ BMI_Cat*GAD + Parity*GAD, data=DivCal_R_df) #Removing interactions from the model (because they are not significant) does not produce a significant difference in the variable of interest, it is still NOT significant
+ResObs3 <- Anova(in_GAD)
+IRGAD <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+
+Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GAD") + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol) + geom_jitter()  +  annotate("text", label = paste("P=", IRGAD), x=1.5, y =9, size = 4, colour = "black") + theme(legend.position='none')
+cat('\n')
+
+gridExtra::grid.arrange(Rich_Plot1, Rich_Plot2, ncol = 2)
+```
+
+###Beta diversity
+
+Interactions with parity and BMI were tested.
+
+```{r BetaTestPDmy, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+#cat('\n###', Tax[i], "taxonomic level", '\n')
+cat('\n')
+OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+X <- cut(sample_data(OTU_Plot)$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(OTU_Plot)$GAD <- X
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta2_df <- as.data.frame(Meta2)
+Meta2_df$Parity <- as.factor(Meta2_df$Parity)
+Meta2_df$GAD <- as.factor(Meta2_df$GAD)
+Meta2_df$BMI <- as.numeric(Meta2_df$BMI)
+
+AdonisR <- adonis2(D2 ~  Parity*GAD + GAD*BMI, data=Meta2_df) 
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[3], 4)
+
+## 95% CI
+CI.Rsq(0.016, n=59, k=5)
+}
+```
+
+###Differential abundance analysis
+
+```{r DAPDMyco, echo=FALSE, fig.height=12, fig.width=16}
+for(i in 1:5){
+VecOFilt <- Vec3[[i]]
+Counts <- as.data.frame(otu_table(VecOFilt))
+# Metadata
+Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+Meta_df$GAD <- as.factor(Meta_df$GAD)
+contrasts(Meta_df$GAD) <- contr.sum(levels(Meta_df$GAD))
+Meta_df$BMI <- as.numeric(as.character(Meta_df$BMI))
+Meta_df$BMI <- Meta_df$BMI - mean(Meta_df$BMI)
+
+design <- model.matrix(~0 + GAD + Parity, data=Meta_df)
+dge <- DGEList(Counts, group= Meta_df$GAD)
+
+#Prevalence filter (there are too many features that appear only in a few samples, so better to apply a filter)
+M <- dge$counts
+M[M>0] <-1
+keepP <- rowSums(M) > 6 #6 is based on 10% of the samples (62)
+dge <- dge[keepP,,keep.lib.sizes=FALSE]
+dge <- dge[,which(!dge$samples$lib.size == 0)]
+# Metadata
+dgeN <- colnames(dge$counts)
+VecF <- prune_samples(as.character(dgeN), VecOFilt)
+Counts <- as.data.frame(otu_table(VecF))
+Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+
+design <- model.matrix(~0 + GAD + Parity, data=Meta_df)
+
+dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+fit <- voomLmFit(dgeTMM, design = design , plot = FALSE)
+
+## Contrast GAD_levels 
+cont <- makeContrasts(GAD=GADPremature-GADTerm, levels=design)
+
+fitc <- contrasts.fit(fit, contrasts = cont)
+fitc <- eBayes(fitc, robust=TRUE)
+DT<- decideTests(fitc)
+summary(DT)
+
+#Top table results
+TT <- topTable(fitc, coef = "GAD", n=Inf)
+}
+```
+
+##Preeclampsia (PE)
+
+###Description of samples used in this analysis
+
+```{r MycoPE, echo=FALSE, fig.height=12, fig.width=16}
+load(file="/$HOME/MycobiomeObjects.RData")
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec[[i]] <- phyloseq(otu_table(Vec[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec[[i]]), phy_tree(Vec[[i]]))
+Vec[[i]] <- subset_samples(Vec[[i]], T1Dstatus=="T1D")
+Vec[[i]] <- subset_samples(Vec[[i]], Any.PE!="NA")
+
+}
+for(i in 1:5){
+Vec3[[i]] <- phyloseq(otu_table(Vec3[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec3[[i]]), phy_tree(Vec3[[i]]))
+Vec3[[i]] <- subset_samples(Vec3[[i]], T1Dstatus=="T1D")
+Vec3[[i]] <- subset_samples(Vec3[[i]], Any.PE!="NA")
+
+}
+for(i in 1:5){
+VecP[[i]] <- phyloseq(otu_table(VecP[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecP[[i]]), phy_tree(VecP[[i]]))
+VecP[[i]] <- subset_samples(VecP[[i]], T1Dstatus=="T1D")
+VecP[[i]] <- subset_samples(VecP[[i]], Any.PE!="NA")
+
+}
+
+TB <- table(sample_data(Vec[[1]])$Any.PE)
+```
+
+For analysing the vaginal microbiome of women who had or did not have preeclampsia there are a total of 68 samples for which we have the preeclampsia status. Only samples from women with T1D will be analysed as only women with T1D status had preeclampsia. The samples are distributed as follows:
+
+```{r, Count2, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Since there are no mothers repeated for this dataset, we don't need to take into account the effect of motherid in any of the analysis.
+
+###Alpha diversity
+
+```{r, AlphaPEmy, echo=FALSE}
+OTUVag_RA <- Vec3[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+PREcol <- c("cyan4", "deeppink3")
+```
+
+Cyan: No preeclampsia; Pink: Preeclampsia
+
+```{r AlphaTestPEmy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$Any.PE <- as.factor(sample_data(OTUVag_RA)$Any.PE)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$Any.PE <- factor(DivCal_R_df$Any.PE)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+## Observed Richness
+ob_PE <- glm.nb(Observed ~ BMI_Cat*Any.PE + Parity*Any.PE, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still NOT significant
+ResObs <- Anova(ob_PE)
+RPE <- round(ResObs$`Pr(>Chisq)`[2], 2)
+
+Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + geom_jitter() +  annotate("text", label = paste("P=", RPE), x=1.5, y =17, size = 4, colour = "black") + theme(legend.position='none') + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)
+
+# InvSimpson
+in_PE <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ BMI_Cat*Any.PE + Parity*Any.PE, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still NOT significant
+ResObs3 <- Anova(in_PE)
+IRPE <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+#print(ResObs3)
+
+Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + geom_jitter() +  annotate("text", label = paste("P=", IRPE), x=1.5, y =8, size = 4, colour = "black")  + theme(legend.position='none') + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)
+cat('\n')
+
+gridExtra::grid.arrange(Rich_Plot1, Rich_Plot2, ncol = 2)
+```
+
+###Beta diversity
+
+```{r BetaTestPEmy, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, Any.PE!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D <- distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+Meta_df$motherid <- as.factor(Meta_df$motherid)
+Meta_df$HLA <- as.factor(Meta_df$HLA)
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$Any.PE <- as.factor(Meta_df2$Any.PE)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+Meta_df2$HLA <- as.factor(Meta_df2$HLA)
+Meta_df2 <- subset(Meta_df2, HLA!="NA")
+
+#testing interaction between parity, BMI and HLA with Preeclampsia --> Nothing and any taxonomic level including species
+AdonisR <- adonis2(D2 ~  Parity*Any.PE + BMI*Any.PE + HLA*Any.PE,  data=Meta_df2)
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[2], 2)
+
+## 95% CI
+CI.Rsq(0.002, n=145, k=6)
+
+sample_data(OTU_Plot)$Any.PE <- as.factor(sample_data(OTU_Plot)$Any.PE)
+ordination_OTU<-ordinate(OTU_Plot, method="CAP", distance="bray", ~  Any.PE)
+p_OTU12<-plot_ordination(OTU_Plot, ordination_OTU, type="samples",  color="Any.PE")
+PlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=15), axis.text.x=element_text(size=15), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + annotate("text", label = paste("P=", A2Res), x=1.5, y =2, size = 4, colour = "black") + theme(legend.position='none')
+
+}
+gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4]], PlotList[[5]], ncol = 2)
+```
+
+###Differential abundance analysis
+
+```{r DAPEMyco, echo=FALSE}
+for(i in 1:5){
+  VecOFilt <- Vec3[[i]]
+  VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
+  VecOFilt <- subset_samples(VecOFilt, T1Dstatus=="T1D")
+  VecOFilt <- subset_samples(VecOFilt, Any.PE!="NA")
+  
+  Counts <- as.data.frame(otu_table(VecOFilt))
+  # Metadata
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+  Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+  contrasts(Meta_df$Any.PE) <- contr.sum(levels(Meta_df$Any.PE))
+  
+  design <- model.matrix(~0 + Any.PE , data=Meta_df)
+  dge <- DGEList(Counts, group= Meta_df$Any.PE)
+  
+  #Prevalence filter (there are too many features that appear only in a few samples, so better to apply a filter)
+  M <- dge$counts
+  M[M>0] <-1
+  keepP <- rowSums(M) > 7 #7 is based on 10% of the samples (68)
+  dge <- dge[keepP,,keep.lib.sizes=FALSE]
+  dge <- dge[,which(!dge$samples$lib.size == 0)]
+  # Metadata
+  dgeN <- colnames(dge$counts)
+  VecF <- prune_samples(as.character(dgeN), VecOFilt)
+  Counts <- as.data.frame(otu_table(VecF))
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+  design <- model.matrix(~0 + Any.PE , data=Meta_df)
+  
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE)
+  
+  ## Contrast preeclampsia_levels 
+  cont <- makeContrasts(PE=Any.PE0 - Any.PE1, levels=design)
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  TT <- topTable(fitc, coef = "PE", n=Inf)
+}
+```
+
+##Genitourinary tract infection (GUTI)
+
+###Description of samples used in this analysis
+
+```{r Myco, echo=FALSE, fig.height=12, fig.width=16}
+load(file="/$HOME/MycobiomeObjects.RData")
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+for(i in 1:5){
+Vec[[i]] <- phyloseq(otu_table(Vec[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec[[i]]), phy_tree(Vec[[i]]))
+Vec[[i]] <- subset_samples(Vec[[i]], GU.tract.infection!="NA")
+
+}
+for(i in 1:5){
+Vec3[[i]] <- phyloseq(otu_table(Vec3[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec3[[i]]), phy_tree(Vec3[[i]]))
+Vec3[[i]] <- subset_samples(Vec3[[i]], GU.tract.infection!="NA")
+
+}
+for(i in 1:5){
+VecP[[i]] <- phyloseq(otu_table(VecP[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecP[[i]]), phy_tree(VecP[[i]]))
+VecP[[i]] <- subset_samples(VecP[[i]], GU.tract.infection!="NA")
+
+}
+
+TB <- table(sample_data(Vec[[1]])$GU.tract.infection, sample_data(Vec[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have genitourinary tract infections [GUTI] there are a total of 131 samples for which we have the GUTI status. The samples are distributed between women with and without T1D as follows:
+
+```{r, CountGUTImy, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Since there are no mothers repeated for this dataset, we don't need to take into account the effect of motherid in any of the analysis.
+
+###Alpha diversity
+
+Here we will use a glm.nb only because we have no random effedct of the motherid
+
+```{r, AlphaGUTImy, echo=FALSE}
+OTUVag_RA <- Vec3[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GUTIcol <- c("deepskyblue2", "darkmagenta")
+```
+
+Pale blue: No GUTI; Magenta: GUTI
+
+```{r AlphaTestGUTImy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+Dummy <- OTUVag_RA
+sample_data(Dummy)$GUTI <- as.factor(sample_data(Dummy)$GU.tract.infection)
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GUTI <- factor(DivCal_R_df$GUTI)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+## Observed Richness
+ob_GUTI <- glm.nb(Observed ~  T1Dstatus*GUTI + BMI_Cat*GUTI + Parity*GUTI, data=DivCal_R_df)
+ResObs <- Anova(ob_GUTI)
+
+#Using emmeans to do Contrast 
+DivCal_R_df$T1DGUTI <- with(DivCal_R_df, interaction(T1Dstatus, GUTI, sep = "x"))
+in_GUTI <- glm.nb(Observed ~ Parity + BMI_Cat + T1DGUTI, data=DivCal_R_df)
+marginal = emmeans(in_GUTI, ~ T1DGUTI)
+Contrasts = list(GUTINonT1D=c(1,0,-1,0), GUTIT1D=c(0,1,0,-1))
+ResCat <- contrast(marginal, Contrasts, adjust="none")
+ResIn <- data.frame(ResCat)
+RGUTI_T1D <- round(ResIn$p.value[2], 3)
+RGUTI_NT1D <- round(ResIn$p.value[1], 4)
+
+##Divided by T1D status
+DummyNT1D <- subset_samples(Dummy, T1Dstatus=="Non-T1D")
+Rich_P <- plot_richness(DummyNT1D, x="GUTI", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_PlotNT1D <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GUTI), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x=element_blank(), plot.title = element_text(size=12)) +  annotate("text", label = paste("P=0.0004"), x=1.8, y =15, size = 4, colour = "black") + theme(legend.title = element_text(size=12), legend.text = element_text(size=15)) + labs(color="GUTI") + geom_jitter()  + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(legend.position='none')
+
+gridExtra::grid.arrange(Rich_PlotNT1D, Rich_PlotT1D, ncol = 2)
+
+# InvSimpson
+in_GUTI <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ GUTI*T1Dstatus + BMI_Cat*GUTI + Parity*GUTI, data=DivCal_R_df) #Testing if the model is better when removing interactions to simplify it.
+in_GUTI2 <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ GUTI*T1Dstatus + Parity*GUTI, data=DivCal_R_df)
+
+lrtest(in_GUTI, in_GUTI2) ## 
+##Likelihood ratio test
+#Model 1: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI * T1Dstatus + BMI_Cat * GUTI + Parity * GUTI
+#Model 2: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI * T1Dstatus + Parity * GUTI
+#Df  LogLik Df  Chisq Pr(>Chisq)
+#1  12 -1127.2                     
+#2   7 -1131.1 -5 7.7751     0.1691
+#We can remove BMI_Cat*GUTI, so now try if we can remove Parity*GUTI
+
+in_GUTI <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ GUTI*T1Dstatus, data=DivCal_R_df)
+lrtest(in_GUTI, in_GUTI2)
+#Likelihood ratio test
+#Model 1: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI * T1Dstatus
+#Model 2: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI * T1Dstatus + Parity * GUTI
+#Df  LogLik Df  Chisq Pr(>Chisq)
+#1   5 -1133.3                     
+#2   7 -1131.1  2 4.4847     0.1062
+#We can remove Parity*GUTI, test if we can remove interaction with T1D
+
+in_GUTI2 <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ GUTI + T1Dstatus, data=DivCal_R_df)
+lrtest(in_GUTI, in_GUTI2)
+
+#Likelihood ratio test
+#Model 1: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI * T1Dstatus
+#Model 2: round(((DivCal_R_df$InvSimpson) * 1000), 0) ~ GUTI + T1Dstatus
+#Df  LogLik Df  Chisq Pr(>Chisq)  
+#1   5 -1133.3                       
+#2   4 -1135.3 -1 4.0321    0.04464 *
+
+#We can't remove the interaction of GUTI with T1Dstatus, so we stay with it.
+ResIS <- Anova(in_GUTI)
+
+#Using emmeans to make Contrasts
+DivCal_R_df$T1DGUTI <- with(DivCal_R_df, interaction(T1Dstatus, GUTI, sep = "x"))
+in_GUTI <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~  BMI_Cat + Parity + T1DGUTI, data=DivCal_R_df)
+marginal = emmeans(in_GUTI, ~ T1DGUTI)
+Contrasts = list(GUTINT1D=c(1,0,-1,0), GUTIT1D=c(0,1,0,-1))
+ResCat <- contrast(marginal, Contrasts, adjust="none")
+ResIn <- data.frame(ResCat)
+RGUTI_NT1D <- round(ResIn$p.value[1], 2)
+RGUTI_T1D <- round(ResIn$p.value[2], 2)
+
+##Divided by T1D status
+Rich_P <- plot_richness(DummyNT1D, x="GUTI", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_PlotP0 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GUTI), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x=element_blank(), plot.title = element_text(size=12)) +  annotate("text", label =paste("P=", RGUTI_NT1D), x=1.5, y =7, size = 4, colour = "black") + theme(legend.title = element_text(size=12), legend.text = element_text(size=15)) + labs(color="GUTI") + geom_jitter()   + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol) + theme(legend.position='none')
+
+GUTI_NT1D_Alpha <- gridExtra::grid.arrange(Rich_PlotNT1D, Rich_PlotP0, ncol = 2)
+```
+
+###Beta diversity
+
+```{r BetaTestGUTImy, echo=FALSE, fig.height=20, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+NGUTIPlotList <- vector('list', length(5))
+GUTIPlotList <- vector('list', length(5))
+
+for(i in 1:5){
+OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+sample_data(OTU_Plot)$GUTI <- as.factor(sample_data(OTU_Plot)$GU.tract.infection)
+OTU_Plot <- subset_samples(OTU_Plot, GUTI!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$GUTI <- as.factor(Meta_df2$GUTI)
+Meta_df2$T1Dstatus <- as.factor(Meta_df2$T1Dstatus)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+
+AdonisR <- adonis2(D2 ~  Parity*GUTI + BMI*GUTI + T1Dstatus*GUTI, data=Meta_df2)
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[2], 2)
+
+if(i==1 | i==5){
+sample_data(OTU_Plot)$GUTI <- as.factor(sample_data(OTU_Plot)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot, ordination_OTU, type="samples",  color="GUTI")
+PlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=15), axis.text.x=element_text(size=15), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) +  annotate("text", label =paste("P=", A2Res), x=1.5, y =-1, size = 4, colour = "black") + ggtitle( paste(Tax[i])) + theme(legend.position='none')  + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol) 
+} else {
+##Test pairwise within levels of T1D status
+library("pairwiseAdonis")
+#Factor to do pairwise
+Meta_df2$T1DGUTI <- with(Meta_df2, interaction(T1Dstatus, GUTI, sep = "x"))
+GUTIT1D <- pairwise.adonis2(D2 ~ T1DGUTI, Meta_df2, strata = NULL, nperm = 999)
+GUTI_T1D <- GUTIT1D$T1Dx1_vs_T1Dx0
+GUTI_NT1D <- GUTIT1D$`Non-T1Dx1_vs_Non-T1Dx0`
+
+
+if(i==6){
+sample_data(OTU_Plot0G)$GUTI <- as.factor(sample_data(OTU_Plot0G)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot0G, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot0G, ordination_OTU, type="samples",  color="GUTI")
+NGUTIPlotList[[2]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x=element_text(size=15), plot.title = element_text(size=15)) + annotate("text", label =paste("P=0.025"), x=1.5, y =-1, size = 4, colour = "black")  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(legend.position='none')
+
+sample_data(OTU_Plot0F)$GUTI <- as.factor(sample_data(OTU_Plot0F)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot0F, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot0F, ordination_OTU, type="samples",  color="GUTI")
+NGUTIPlotList[[3]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x=element_text(size=15), plot.title = element_text(size=15)) + annotate("text", label =paste("P=0.033"), x=1.5, y =-1, size = 4, colour = "black")  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(legend.position='none')
+}
+
+
+####
+OTU_Plot0 <- subset_samples(OTU_Plot2, T1Dstatus=="Non-T1D")
+sample_data(OTU_Plot0)$GUTI <- as.factor(sample_data(OTU_Plot0)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot0, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot0, ordination_OTU, type="samples",  color="GUTI")
+NGUTIPlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x=element_text(size=15), plot.title = element_text(size=15)) + annotate("text", label =paste("P=", GUTI_NT1D$`Pr(>F)`[1]), x=1.5, y =-1, size = 4, colour = "black")  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(legend.position='none')# + ggtitle( paste(Tax[i], "(Non-T1D)"))
+
+OTU_Plot1 <- subset_samples(OTU_Plot, T1Dstatus=="T1D")  
+sample_data(OTU_Plot1)$GUTI <- as.factor(sample_data(OTU_Plot1)$GUTI)
+ordination_OTU<-ordinate(OTU_Plot1, method="CAP", distance="bray", ~  GUTI)
+p_OTU12<-plot_ordination(OTU_Plot1, ordination_OTU, type="samples",  color="GUTI")
+GUTIPlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=15), axis.text.x=element_text(size=15), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol) + annotate("text", label =paste("P=", GUTI_T1D$`Pr(>F)`[1]), x=1.5, y =-1, size = 4, colour = "black")  + theme(legend.position='none') + ggtitle( paste(Tax[i], "(T1D)"))
+}
+
+}
+
+gridExtra::grid.arrange(PlotList[[1]], GUTIPlotList[[2]], NGUTIPlotList[[2]], GUTIPlotList[[3]], NGUTIPlotList[[3]], GUTIPlotList[[4]], NGUTIPlotList[[4]], PlotList[[5]],  ncol = 3)
+```
+
+###Differential abundance
+
+```{r DAGUTIMyco, echo=FALSE}
+for(i in 1:5){
+  VecOFilt <- Vec3[[i]]
+  sample_data(VecOFilt)$GUTI <- as.factor(sample_data(VecOFilt)$GU.tract.infection)
+  Counts <- as.data.frame(otu_table(VecOFilt))
+  # Metadata
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+  Meta_df$GUTI <- as.factor(Meta_df$GUTI)
+  contrasts(Meta_df$GUTI) <- contr.sum(levels(Meta_df$GUTI))
+  
+  design <- model.matrix(~0 + GUTI, data=Meta_df)
+  dge <- DGEList(Counts, group= Meta_df$GUTI)
+  
+  #Prevalence filter
+  M <- dge$counts
+  M[M>0] <-1
+  keepP <- rowSums(M) > 13 #13 is about 10% of the samples (131) 
+  dge <- dge[keepP,,keep.lib.sizes=FALSE]
+  dge <- dge[,which(!dge$samples$lib.size == 0)]
+  # Metadata
+  dgeN <- colnames(dge$counts)
+  VecF <- prune_samples(as.character(dgeN), VecOFilt)
+  Counts <- as.data.frame(otu_table(VecF))
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+  Meta_df$T1Dstatus <- as.factor(Meta_df$T1Dstatus)
+  levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D")
+  
+  contrasts(Meta_df$T1Dstatus) <- contr.sum(levels(Meta_df$T1Dstatus))
+  Meta_df$GUTIT1D <-as.factor(paste(Meta_df$GUTI, Meta_df$T1Dstatus, sep="."))
+  
+  design <- model.matrix(~0 + GUTIT1D + Parity, data=Meta_df)
+  
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE)
+  
+  ## Contrast GUTI_levels 
+  cont <- makeContrasts(GUTI=(GUTIT1D0.NonT1D + GUTIT1D0.T1D)/2 - (GUTIT1D1.NonT1D + GUTIT1D1.T1D)/2, GUTIT1D=GUTIT1D0.T1D-GUTIT1D1.T1D, GUTINT1D=GUTIT1D0.NonT1D-GUTIT1D1.NonT1D, levels=design)
+  
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  #All women with and without T1D
+  TT <- topTable(fitc, coef = "GUTI", n=Inf) #No significant differences due to GUTI were found at any taxonomic level in general when all women (with and without T1D) were considered in the analysis
+ 
+  #Only women with T1D
+  TT <- topTable(fitc, coef = "GUTIT1D", n=Inf) #No significant differences due to GUTI were found at any taxonomic level in women with T1D
+   
+  #Only women without T1D
+  TT <- topTable(fitc, coef = "GUTINT1D", n=Inf)
+  TO <- TT
+  TV<- vector()
+  Mean <- data.frame(fit$coef[rownames(TO),c(1,3)])
+  colnames(Mean)[1:2] <- c("MEAN:No GUTI", "MEAN:GUTI")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- data.frame(SE[rownames(TO),c(1,3)])
+  colnames(SE)[1:2] <- c("SE:No GUTI", "SE:GUTI")
+  MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+  MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+  if(i==1){
+  for(n in 1:length(rownames(MeanSE))){
+    TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],"Classification"]  }
+  } else {
+  for(n in 1:length(rownames(MeanSE))){
+    TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]] 
+  }}
+  rownames(MeanSE) <- TV
+  
+  MeanSE$Taxa <- rownames(MeanSE)
+  X <- melt(MeanSE[,3:8], "Taxa")
+  Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+  Z <- cbind(X[1], Y, X[3])
+  Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("GUTI", length(MeanSE$adj.P.Val))
+  Z2 <- dcast(Z, Taxa + X2 ~ X1)
+  Z2$adj.P.Val <- round(Z2$adj.P.Val, 4)
+  colnames(Z2)[2] <- "GUTI status"
+  
+  Z2$Taxa <- as.factor(Z2$Taxa)
+  
+  if(i==1){
+  Zspe <- Z2[c(3:24),]
+  }
+  if(i==2){
+  Zgen <- Z2[c(5:12),]
+  }
+  if(i==3){
+  Zfam <- Z2[c(3:4),]
+  }
+  if(i==4){
+  Zord <- Z2[c(5:22),]
+  }
+  if(i==5){
+  Zphy <- Z2
+  }
+  
+}
+
+ZA <- rbind(Zspe, Zgen, Zfam, Zord, Zphy)
+ZA2 <- ZA[c(1:12,17:18,21:48),]
+Orden <- unique(ZA2$Taxa)
+ZA2$Taxa <- factor(ZA2$Taxa, levels=Orden)
+p2 <- ggplot(ZA2, aes(x=Taxa, y=MEAN, colour=`GUTI status`, label=adj.P.Val))
+DAMycGUTIAll <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=4, check_overlap = TRUE) + theme(axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x = element_text(angle = 45, hjust=1, size=12, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +  ylab("log2-transformed fitted values") + theme(legend.position='none')
+##Only Species level
+ZASpe <- ZA2[c(1:16),] 
+p2 <- ggplot(ZASpe, aes(x=Taxa, y=MEAN, colour=`GUTI status`, label=adj.P.Val))
+DAMycGUTISpe <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=4, check_overlap = TRUE) + theme(axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x = element_text(angle = 45, hjust=1, size=12, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GUTIcol) + scale_color_manual(values=GUTIcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +  ylab("log2-transformed fitted values") + theme(legend.position='none')
+```
+
+###Composed plots
+
+```{r PlotsGUTI, echo=FALSE}
+Plot1 <- ggarrange(Rich_PlotNT1D, Rich_PlotP0, NGUTIPlotList[[2]], ncol=3, labels = c("B", "C", "D")) + theme(plot.margin = margin(0.1,0.1,1,0.1, "cm") )  
+F5 <- ggarrange(DAMicroGUTI, Plot1, DAMycGUTISpe, ncol=1, labels = c("A", "", "E"), heights = c(0.5, 0.35, 0.5))  + theme(plot.margin = margin(0.2,0.2,0.2,0.2, "cm") )  
+```
+
+##Group B Streptococcus infections (GBSI)
+
+###Description of samples used in this analysis
+
+```{r MycoGBS, echo=FALSE, fig.height=12, fig.width=16}
+load(file="/$HOME/MycobiomeObjects.RData")
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+
+for(i in 1:5){
+Vec[[i]] <- phyloseq(otu_table(Vec[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec[[i]]), phy_tree(Vec[[i]]))
+Vec[[i]] <- subset_samples(Vec[[i]], GBS!="NA")
+
+}
+for(i in 1:5){
+Vec3[[i]] <- phyloseq(otu_table(Vec3[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec3[[i]]), phy_tree(Vec3[[i]]))
+Vec3[[i]] <- subset_samples(Vec3[[i]], GBS!="NA")
+
+}
+for(i in 1:5){
+VecP[[i]] <- phyloseq(otu_table(VecP[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(VecP[[i]]), phy_tree(VecP[[i]]))
+VecP[[i]] <- subset_samples(VecP[[i]], GBS!="NA")
+
+}
+
+TB <- table(sample_data(Vec[[1]])$GBS, sample_data(Vec[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have Group B streptococcus [GBS] there are a total of 93 samples for which we have the GBS status. The samples are distributed between women with and without T1D as follows:
+
+```{r, CountGBSmy, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Since there are no mothers repeated for this dataset, we don't need to take into account the effect of motherid in any of the analysis.
+
+###Alpha diversity
+
+```{r, AlphaGBSmy, echo=FALSE}
+OTUVag_RA <- Vec3[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GBScol <- c("cornflowerblue", "darkgoldenrod1")
+```
+
+Pale blue: No GBS; Gold: GBS.
+
+```{r AlphaTestGBSmy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$GBS <- as.factor(sample_data(OTUVag_RA)$GBS)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$T1Dstatus <- factor(DivCal_R_df$T1Dstatus)
+DivCal_R_df <- subset(DivCal_R_df, GBS!="NA")
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+ob_GBS <- glm.nb(Observed ~ T1Dstatus*GBS + BMI*GBS + Parity*GBS, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still significant
+ResObs <- Anova(ob_GBS)
+RGBS <- round(ResObs$`Pr(>Chisq)`[2], 3)
+
+Dummy <- subset_samples(Dummy, GBS!="NA")
+Rich_P <- plot_richness(Dummy, x="GBS", scales = "fixed", measures=c("Observed"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot1My <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GBS), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=11), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GBS") + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol) + geom_jitter() +  annotate("text", label = paste("P=", RGBS), x=1.5, y =20, size = 4, colour = "black") + theme(legend.position='none') 
+
+
+#InvSimpson
+in_GBS <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ T1Dstatus*GBS + BMI_Cat*GBS + Parity*GBS, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still NOT significant
+ResObs3 <- Anova(in_GBS)
+IRGBS <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+
+Rich_P <- plot_richness(Dummy, x="GBS", scales = "fixed", measures=c("InvSimpson"))
+Rich_P$layers <- Rich_P$layers[-1]
+Rich_Plot2My <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GBS), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="GBS") + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol) + geom_jitter() +  annotate("text", paste("P=", IRGBS), x=1.5, y =6, size = 4, colour = "black") + theme(legend.position='none')
+cat('\n')
+
+cat('\n')
+AlphaMicroGBS <- gridExtra::grid.arrange(Rich_Plot1, Rich_Plot2, ncol = 2)
+```
+
+###Beta diversity
+
+```{r BetaTestGBSmy, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+Nulli <- vector('list', length(2))
+Multi <- vector('list', length(2))
+
+for(i in 1:5){
+cat('\n')
+#cat('\n###', Tax[i], "taxonomic level", '\n')
+cat('\n')
+OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, GBS!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$GBS <- as.factor(Meta_df2$GBS)
+Meta_df2$T1Dstatus <- as.factor(Meta_df2$T1Dstatus)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+
+#testing interaction between T1Dstatus, parity, BMI with GBS 
+AdonisR <- adonis2(D2 ~  T1Dstatus*GBS + Parity*GBS + BMI*GBS,  data=Meta_df2)
+print(AdonisR)
+A2Res <- round(AdonisR$`Pr(>F)`[2], 2)
+
+sample_data(OTU_Plot)$GBS <- as.factor(sample_data(OTU_Plot)$GBS)
+sample_data(OTU_Plot)$Parity <- as.factor(sample_data(OTU_Plot)$Parity)
+ordination_OTU<-ordinate(OTU_Plot, method="CAP", distance="bray", ~  GBS)
+p_OTU12<-plot_ordination(OTU_Plot, ordination_OTU, type="samples",  color="GBS")
+PlotList[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_text(size=14), axis.title.x = element_text(size=14)) + theme(axis.text.y =element_text(size=14), axis.text.x=element_text(size=14), plot.title = element_text(size=14))  + theme(legend.title = element_text(size=14), legend.text = element_text(size=14)) + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol)  + theme(legend.position='none') +  annotate("text", label = paste("P=", A2Res), x=-3, y =-0.5, size = 4, colour = "black")# + ggtitle( paste(Tax[i])) 
+cat('\n')
+cat('\n')
+}
+gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4]], PlotList[[5]], ncol = 3)
+BetaGBSMyG <- PlotList[[2]]
+BetaGBSMyF <- PlotList[[3]]
+```
+
+###Differential abundance
+
+```{r DAGBSMyco, echo=FALSE}
+VecOFilt <- Vec3[[i]]
+VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
+VecOFilt <- subset_samples(VecOFilt, GBS!="NA")
+
+Counts <- as.data.frame(otu_table(VecOFilt))
+# Metadata
+Meta_df <- as.data.frame(as.matrix(sample_data(VecOFilt)))
+Meta_df$GBS <- as.factor(Meta_df$GBS)
+contrasts(Meta_df$GBS) <- contr.sum(levels(Meta_df$GBS))
+
+design <- model.matrix(~0 + GBS, data=Meta_df) #The general test was done with a single factor because we did not see significant interactions between GBS and T1D status in the beta diversity analysis
+dge <- DGEList(Counts, group=Meta_df$GBS)
+
+#Prevalence filter
+M <- dge$counts
+M[M>0] <-1
+keepP <- rowSums(M) > 10 #10 based on 10% of total (87)
+dge <- dge[keepP,,keep.lib.sizes=FALSE]
+dge <- dge[,which(!dge$samples$lib.size == 0)]
+# Metadata
+dgeN <- colnames(dge$counts)
+VecF <- prune_samples(as.character(dgeN), VecOFilt)
+Counts <- as.data.frame(otu_table(VecF))
+Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+design <- model.matrix(~0 + GBS, data=Meta_df)
+
+dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+fit <- voomLmFit(dgeTMM, design = design , plot = FALSE)
+
+## Contrast GBS_levels 
+cont <- makeContrasts(GBS=GBS0 - GBS1, levels=design)
+
+fitc <- contrasts.fit(fit, contrasts = cont)
+fitc <- eBayes(fitc, robust=TRUE)
+DT<- decideTests(fitc)
+summary(DT)
+
+TT <- topTable(fitc, coef = "GBS", n=Inf)
+TO <- TT
+TV<- vector()
+Mean <- data.frame(fit$coef[rownames(TO),c(1,2)])
+colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+SE <- data.frame(SE[rownames(TO),c(1,2)])
+colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+if(nrow(MeanSE)>0){
+  for(n in 1:length(rownames(MeanSE))){
+    if(i==1){
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],"Classification"]  
+    } else {
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+    }
+  }
+  rownames(MeanSE) <- TV
+  
+   #For plot
+  MeanSE$Taxa <- rownames(MeanSE)
+  X <- melt(MeanSE[,3:8], "Taxa")
+  Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+  Z <- cbind(X[1], Y, X[3])
+  Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("GBS", length(MeanSE$adj.P.Val))
+  Z2 <- dcast(Z, Taxa + X2 ~ X1)
+  Z2$adj.P.Val <- round(Z2$adj.P.Val, 2)
+  colnames(Z2)[2] <- "GBS status"
+  
+  if(i==1){
+  Zspe <- Z2  
+  }
+  if(i==2){
+  ZGen <- Z2  
+  }
+
+  
+if(i==2){
+  Zspe$Taxa <- c("Cladosporium(OTU)", "Cladosporium(OTU)", "Peniophora(OTU)", "Peniophora(OTU)")
+  
+  ZA <- rbind(Zspe, ZGen)
+  Order <- unique(ZA$Taxa)
+  Order <- Order[c(1,2,4,5,3)]
+  ZA$Taxa <- factor(ZA$Taxa, levels=Order)
+  ZA$`GBS status` <- relevel(ZA$`GBS status`, ref="No GBS")
+  
+  pd <- position_dodge(0.5)
+  p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`GBS status`, label=adj.P.Val))
+  DAMycoGBS <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=14), axis.text.x = element_text(angle = 45, hjust=1, size=12, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GBScol) + scale_color_manual(values=GBScol)   + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=3.5, check_overlap = TRUE) + ylab("log2-transformed fitted values") + theme(legend.position='none') 
+}
+
+Meta_df$T1Dstatus <- factor(Meta_df$T1Dstatus)
+  levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D")
+  Meta_df$GBS_T1Dstatus <- as.factor(paste(Meta_df$GBS,Meta_df$T1Dstatus, sep="."))
+  contrasts(Meta_df$GBS_T1Dstatus) <- contr.sum(levels(Meta_df$GBS_T1Dstatus))
+  
+  design <- model.matrix(~0 + GBS_T1Dstatus + Parity, data=Meta_df)
+  
+  dge <- DGEList(Counts, group= Meta_df$GBS_T1Dstatus)
+  #Prevalence filter
+  M <- dge$counts
+  M[M>0] <-1
+  keepP <- rowSums(M) > 10 #10 based on 10% of total (87)
+  dge <- dge[keepP,,keep.lib.sizes=FALSE]
+  dge <- dge[,which(!dge$samples$lib.size == 0)]
+  # Metadata
+  dgeN <- colnames(dge$counts)
+  VecF <- prune_samples(as.character(dgeN), VecOFilt)
+  Counts <- as.data.frame(otu_table(VecF))
+  Meta_df <- as.data.frame(as.matrix(sample_data(VecF)))
+  Meta_df$GBS <- as.factor(Meta_df$GBS)
+  contrasts(Meta_df$GBS) <- contr.sum(levels(Meta_df$GBS))
+  Meta_df$Parity <- as.factor(Meta_df$Parity)
+  contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+  Meta_df$T1Dstatus <- factor(Meta_df$T1Dstatus)
+  levels(Meta_df$T1Dstatus) <- c("NonT1D", "T1D")
+  Meta_df$GBS_T1Dstatus <- as.factor(paste(Meta_df$GBS,Meta_df$T1Dstatus, sep="."))
+  contrasts(Meta_df$GBS_T1Dstatus) <- contr.sum(levels(Meta_df$GBS_T1Dstatus))
+  
+  design <- model.matrix(~0 + GBS_T1Dstatus + Parity, data=Meta_df)
+  
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE)
+  
+  ## Contrast GBS_levels 
+  cont <- makeContrasts(GBS=(GBS_T1Dstatus0.NonT1D + GBS_T1Dstatus0.T1D)- (GBS_T1Dstatus1.NonT1D + GBS_T1Dstatus1.T1D), GBSNT1D=GBS_T1Dstatus0.NonT1D-GBS_T1Dstatus1.NonT1D, GBST1D=GBS_T1Dstatus0.T1D-GBS_T1Dstatus1.T1D, levels=design)
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  TT <- topTable(fitc, coef = "GBSNT1D", n=Inf)
+  TO <- TT
+  TV<- vector()
+  Mean <- data.frame(fit$coef[rownames(TO),c(1,3)])
+  colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- data.frame(SE[rownames(TO),c(1,3)])
+  colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+  MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+  MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+    
+    for(n in 1:length(rownames(MeanSE))){
+      if(i==1){
+        TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],"Classification"]  
+      } else {
+        TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+      }
+    }
+  rownames(MeanSE) <- TV
+  
+  if(i==3){  ##To only print the one that was significantly different
+  MeanSENT1D <- MeanSE
+  MeanSENT1DT1D
+  }
+  
+  TT <- topTable(fitc, coef = "GBST1D", n=Inf)
+  TO <- TT
+  TV<- vector()
+  Mean <- data.frame(fit$coef[rownames(TO),c(2,4)])
+  colnames(Mean)[1:2] <- c("MEAN:No GBS", "MEAN:GBS")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- data.frame(SE[rownames(TO),c(2,4)])
+  colnames(SE)[1:2] <- c("SE:No GBS", "SE:GBS")
+  MeanSE <- cbind(TT[,c(1,4:5)], Mean, SE)
+  MeanSE <- MeanSE[(MeanSE$adj.P.Val<0.1),]
+  
+  for(n in 1:length(rownames(MeanSE))){
+    if(i==1){
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],"Classification"]  
+    } else {
+      TV[n] <- tax_table(VecOFilt)[rownames(MeanSE)[n],Tax[i]]  
+    }
+  }
+
+  rownames(MeanSE) <- TV
+  
+  if(i==1){  #To only print the one that was significantly different and that was not different in the main overal test.
+  MeanSET1D <- MeanSE
+  MeanSET1D[1,]
+  }
+}
+```
+
+###Composed figure
+
+```{r ComposedGBS, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+##GBS
+plot2 <- ggarrange(Rich_Plot2, Rich_Plot1My, BetaGBSMyG, ncol=3, labels = c("B", "C", "D")) + theme(plot.margin = margin(0.2,0.2,1,0.2, "cm"))
+Plot3 <- ggarrange(BetaGBSMyF, DAMycoGBS, ncol=2, labels = c("E", "F"), widths = c(0.35, 0.65))
+PlotX <- ggarrange(DAMicroGBSN, plot2, Plot3, ncol=1, labels = c("A"), heights = c(0.4, 0.3, 0.3))
+```

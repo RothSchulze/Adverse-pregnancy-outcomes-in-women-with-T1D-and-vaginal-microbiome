@@ -1,0 +1,310 @@
+---
+title: "Vaginal micro-mycobiome analysis 2020"
+author: "Alexandra Roth Schulze"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+---
+
+```{r echo=FALSE}
+options(width = 90)
+```
+
+```{r ,include=FALSE}
+library(knitr)
+opts_chunk$set(comment = NA, warning=FALSE, message=FALSE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+library("ggplot2")
+theme_set(theme_bw())
+pal = "Set1"
+scale_colour_discrete <- function(palname = pal, ...) {
+    scale_colour_brewer(palette = palname, ...)
+}
+scale_fill_discrete <- function(palname = pal, ...) {
+    scale_fill_brewer(palette = palname, ...)
+}
+```
+
+
+```{r PackageLoad, tidy=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+library("stringr")
+library("ggplot2")
+library("ade4")
+library("plotly")
+library("RColorBrewer")
+library("matrixStats")
+library("knitr")
+library("RColorBrewer")
+library("limma")
+library("edgeR")
+library("matrixStats")
+library("phyloseq")
+library("vegan")
+library("reshape2")
+library("scales")
+library("lme4")
+library("lmerTest")
+library("geepack")
+library("dplyr")
+library("Hmisc")
+library("emmeans")
+library("doBy")
+library("data.table")
+library("microbiomeSeq")
+library("devtools")
+library("adespatial")
+library("genefilter")
+library("metagMisc")
+library("easyGgplot2")
+library("kableExtra")
+
+#Taxa names
+makeTaxLabel <- function(OTU, mydata){
+    # Makes a string label using the lowest informative tax level
+    #
+    # Args:
+    #   OTU: OTU number
+    #   mydata: the phyloseq object with the tax table
+    #
+    # Returns:
+    #   a tax name
+    OTU <- as.character(OTU)  # the OTU numbers are stored as character not integer!
+    taxstrings <- as.character(taxTab(mydata)[OTU])
+    empty_strings <- c("k__", "p__", "c__", "o__", "f__", "g__", "s__")
+    tax_name <- NA
+    tax_level <- length(taxstrings)  # start at lowest tax level
+
+    while(is.na(tax_name) | 
+              (tax_name %in% empty_strings)){
+        tax_name  <- taxstrings[tax_level]
+        tax_level <- tax_level -1
+    }
+    tax_name
+}
+###############
+
+##Filter abundance
+# function to perform pre-filtering
+low.count.removal = function(data, percent=0.01)
+{
+  keep.otu = which(colSums(data)*100/(sum(colSums(data))) > percent)
+  data.filter = data[,keep.otu]
+  return(list(data.filter = data.filter, keep.otu = keep.otu))
+}
+##############
+
+```
+
+#Pre-processing
+
+The taxonomic classification was further improved by BLASTing each sequence and assigning a species name based on this in order to aglomerate features into OTUs based on this species assignation. The file containing the information can be found in the folder of this analysis. It will tell to which species each feature had a equally good (same identity %) hit to and to which one corresponds.
+
+Methodology description cited ( doi: 10.7554/eLife.57051 --> https://elifesciences.org/articles/57051) the authors describe as part of their pipeline:
+
+For the three most dominant ASVs in each vaginal CST, we performed BLASTN (v 2.10.1+) against the NCBI 16S ribosomal RNA database (Zhang et al., 2000), excluding models (XM/XP) and uncultured/environmental samples (Source data 2). Alignments were filtered to minimum 99% identity, and the ASVs were assigned to unique species, when possible. In these cases where multiple species aligned equally well, we used published studies to select the most likely species. As an example, L. crispatus and L. acidophilus could not be distinguished based on the sequenced region, and as published studies on the vaginal microbiota concur that L. crispatus, in contrast to L. acidophilus, constitute an important part of the vaginal microbiota, we refer to L. crispatus/L. acidophilus solely as L. crispatus. Based on this reasoning, we will also refer to L. gasseri/johnsonii solely as L. gasseri (Antonio et al., 1999; Kiss et al., 2007; Vásquez et al., 2002).
+
+#Microbiome
+
+```{r Imp.format, echo=FALSE}
+###Importing and formating microbiome
+Feat <- load(file="/$HOME/Mothers_Vaginal_Features_Phyloseq_Obj_Filtered1.RData")
+tax_table(Mother_VCMCFHS_AFilt1) <- tax_table(Mother_VCMCFHS_AFilt1)[, 1:7]
+colnames(tax_table(Mother_VCMCFHS_AFilt1)) <- c("Kindom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2.csv", header=TRUE, row.names=1, sep="\t")
+
+PhyTree <- read_tree("/$HOME/rooted-tree_Vaginal.nwk")
+
+Mother_VCMCFHS_AFilt12 <- phyloseq(otu_table(Mother_VCMCFHS_AFilt1, taxa_are_rows = F), sample_data(NewMet), tax_table(Mother_VCMCFHS_AFilt1), phy_tree(PhyTree))
+Mother_VCMCFHS_AFilt1 <- Mother_VCMCFHS_AFilt12
+
+#New classification
+tax_table(Mother_VCMCFHS_AFilt1)["7c942fbcc204080381806f4cc91f41f2",] <- tax_table(Mother_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Mother_VCMCFHS_AFilt1)["9df9743e450924380cd7a4d3cd9c8a59",] <- tax_table(Mother_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Mother_VCMCFHS_AFilt1)["7d35d4541ed0fb016dad07caad37f556",] <- tax_table(Mother_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Mother_VCMCFHS_AFilt1)["297edc18fabd1d1b3234f8ef062a36c2",] <- tax_table(Mother_VCMCFHS_AFilt1)["e716d8c424a91dc74faa15671716cfc1",]
+tax_table(Mother_VCMCFHS_AFilt1)["30d3ed513d2487ebacec1d3806b5ccae",] <- tax_table(Mother_VCMCFHS_AFilt1)["563395e43ea73827809d66727b023e5b",]
+
+NewClass <- read.table(file="/Users/schulze.a/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/ENDIA_Run_17 Vaginal/BLASTn_classification_vaginal_microbiome2.csv", header=TRUE, row.names=1, sep="\t")
+NewClass[,"Good_Class"] <- as.character(NewClass[,"Good_Class"])
+NewClass[,"Genus"] <- as.character(NewClass[,"Genus"])
+tax_table(Mother_VCMCFHS_AFilt1) <- tax_table(Mother_VCMCFHS_AFilt1)[,c("Kindom", "Phylum", "Class", "Order", "Family", "Genus", "Species")]
+tax_table(Mother_VCMCFHS_AFilt1)[,"Species"] <- NewClass[,"Good_Class"]
+tax_table(Mother_VCMCFHS_AFilt1)[,"Genus"] <- NewClass[,"Genus"]
+OTUVag <- tax_glom(Mother_VCMCFHS_AFilt1, taxrank = "Species", NArm=FALSE)
+
+#Remove QLD-BRI-MATER-084
+OTUVag <- subset_samples(OTUVag, rownames(sample_data(OTUVag)) != "QLD-BRI-MATER-084") ## Because it has MODY
+OTUVag <- subset_samples(OTUVag, rownames(sample_data(OTUVag)) != "NSW-SYD-CHW-011") ## It has contamination
+
+#Remove samples without HLA information
+OTUVag <- subset_samples(OTUVag, HLA != "<NA>") ## Because it does not have metadata
+
+#Genus
+OTUVag_G <- tax_glom(OTUVag, taxrank = "Genus", NArm=FALSE)
+taxa_names(OTUVag_G) <- tax_table(OTUVag_G)[,"Genus"]
+
+#Family
+OTUVag_F <- tax_glom(OTUVag, taxrank = "Family", NArm=FALSE)
+taxa_names(OTUVag_F) <- tax_table(OTUVag_F)[,"Family"]
+
+#Order
+OTUVag_O <- tax_glom(OTUVag, taxrank = "Order", NArm=FALSE)
+taxa_names(OTUVag_O) <- tax_table(OTUVag_O)[,"Order"]
+
+#Phylum
+OTUVag_P <- tax_glom(OTUVag, taxrank = "Phylum", NArm=FALSE)
+taxa_names(OTUVag_P) <- tax_table(OTUVag_P)[,"Phylum"]
+
+VecO <- list("Species" = OTUVag, "Genus" = OTUVag_G, "Family"= OTUVag_F, "Order"= OTUVag_O, "Phylum"= OTUVag_P)
+
+#Rarefy
+OTUVag_RA <- rarefy_even_depth(OTUVag, sample.size = 7000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Genus
+OTUVag_RAG <- tax_glom(OTUVag_RA, taxrank = "Genus", NArm=FALSE)
+taxa_names(OTUVag_RAG) <- tax_table(OTUVag_RAG)[,"Genus"]
+
+#Family
+OTUVag_RAF <- tax_glom(OTUVag_RA, taxrank = "Family", NArm=FALSE)
+taxa_names(OTUVag_RAF) <- tax_table(OTUVag_RAF)[,"Family"]
+
+#Order
+OTUVag_RAO <- tax_glom(OTUVag_RA, taxrank = "Order", NArm=FALSE)
+taxa_names(OTUVag_RAO) <- tax_table(OTUVag_RAO)[,"Order"]
+
+#Phylum
+OTUVag_RAP <- tax_glom(OTUVag_RA, taxrank = "Phylum", NArm=FALSE)
+taxa_names(OTUVag_RAP) <- tax_table(OTUVag_RAP)[,"Phylum"]
+
+#Dummy
+TLevel<-c("Species", "Genus", "Family", "Order", "Phylum")
+
+Vec <- list("Species" = OTUVag_RA, "Genus" = OTUVag_RAG, "Family"= OTUVag_RAF, "Order"= OTUVag_RAO, "Phylum"= OTUVag_RAP)
+Vec2 <- list("Species" = OTUVag_RA, "Genus" = OTUVag_RAG, "Family"= OTUVag_RAF, "Order"= OTUVag_RAO, "Phylum"= OTUVag_RAP)
+
+T1Dcol = c("blue", "red")
+
+for (i in 1:5) {
+Dummy <- Vec[[i]]
+#Making sure each factor has the correct class
+#This factor corresponds to extraction batch
+sample_data(Dummy)$SeqRun <- as.factor(sample_data(Dummy)$SeqRun)
+#This factor corresponds to gestational age (day into pregnancy in which the sample was taken)
+sample_data(Dummy)$Days <- as.integer(as.character(sample_data(Dummy)$Days))
+#This factor corresponds to conception age
+sample_data(Dummy)$Age <- as.numeric(as.character(sample_data(Dummy)$Age))
+#This factor corresponds to Body Mass Index at conception time
+sample_data(Dummy)$BMI <- as.numeric(as.character(sample_data(Dummy)$BMI))
+#This factor corresponds to Human leukocyte antigen (HLA) type of the women
+sample_data(Dummy)$HLA <- as.factor(sample_data(Dummy)$HLA)
+#This factor corresponds to parity (which refers to if the women already had children before the current pregnancy)
+sample_data(Dummy)$Parity <- as.factor(sample_data(Dummy)$Parity)
+#This factor corresponds to a unique identifier per person (i.e. if the woman contributed samples from different pregnancies, those samples belong to the same motherid)
+sample_data(Dummy)$motherid <- as.factor(sample_data(Dummy)$motherid)
+#This factor corresponds to T1D status
+sample_data(Dummy)$T1Dstatus <- as.factor(sample_data(Dummy)$T1Dstatus)
+#This factor corresponds to trimester
+sample_data(Dummy)$TriCorr <- as.factor(sample_data(Dummy)$TriCorr)
+
+Vec2[[i]] <- Dummy
+}
+
+save(Vec2, VecO, file="./MicrobiomeObjectsWHLAsamples.RData")
+```
+
+#Mycombiome 
+
+```{r Myco, echo=FALSE, fig.height=12, fig.width=16}
+##Importing mycobiome
+#### ITS1 R1 ####
+T1Dcol <- c("blue", "red")
+Otus_Myco_ITS1_R1 <- import_biom("/$HOME/table_ITS1_R1_wTaxMet.biom", parseFunction = parse_taxonomy_greengenes)
+tax_table(Otus_Myco_ITS1_R1) <- tax_table(Otus_Myco_ITS1_R1)[, 1:7]
+### Import tree ITS1_R1
+Phylogenetic_TreeITS1_R1 <- read_tree("/$HOME/rooted-tree_ITS1_R1.nwk")
+Vec <- list("ITS1_R1" = Otus_Myco_ITS1_R1)
+Vec2 <- vector(mode = "list", length = 4)
+
+Tree <- list("ITS1_R1" = Phylogenetic_TreeITS1_R1) 
+
+for (i in 1:1) {
+Dummy <- Vec[[i]]
+Dummy <- subset_samples(Dummy, SampleType == "Vagina")
+
+Vec2[[i]] <- Dummy
+
+##Make factor
+sample_data(Dummy)$T1Dstatus <- as.factor(sample_data(Dummy)$T1Dstatus)
+sample_data(Dummy)$HLA <- as.factor(sample_data(Dummy)$HLA)
+##Add tree
+TreeD <- Tree[[i]]
+DummyT<-phyloseq(otu_table(Dummy), tax_table(Dummy),  sample_data(Dummy), phy_tree(TreeD))
+#For making OTU, this should be silenced if we want to work with Features
+DummyTOTU <- tip_glom(DummyT, h = 0.02)
+DummyTOTU <-prune_samples(sample_sums(DummyTOTU)>=500, DummyTOTU)
+#Filter low abundance OTUs, or features (depending on the previous command was silenced or not)
+Dummy_df <- as.data.frame(otu_table(DummyTOTU))
+result.filter = low.count.removal(t(Dummy_df), percent=0.01)
+length(result.filter$keep.otu) 
+Keep_OTUS <- names(result.filter$keep.otu)
+DummyTOTUF <- prune_taxa(Keep_OTUS, DummyTOTU)
+
+# Convert names that are not useful to NA
+DummyTOTUF <- subset_taxa(DummyTOTUF, Kingdom!=c("Unassigned"))
+DummyTOTUF <- subset_taxa(DummyTOTUF, Kingdom!=c("Plantae"))
+tax_table(DummyTOTUF) =gsub("uncultured organism", as.character(NA), tax_table(DummyTOTUF))
+tax_table(DummyTOTUF) =gsub("uncultured bacterium", as.character(NA), tax_table(DummyTOTUF))
+
+mynames = NULL
+for (j in 1:length(taxa_names(DummyTOTUF))){
+mynames <- rbind(mynames, c(makeTaxLabel(taxa_names(DummyTOTUF)[j],DummyTOTUF)))
+}
+tax_table(DummyTOTUF) <- cbind(tax_table(DummyTOTUF), OTUID=mynames)
+colnames(tax_table(DummyTOTUF))[8] <- "Classification"
+tax_table(DummyTOTUF) <- cbind(tax_table(DummyTOTUF), tax_table(DummyTOTUF)[,"Species"])
+colnames(tax_table(DummyTOTUF))[9] <- "Classification2"
+
+for (j in 1:length(taxa_names(DummyTOTUF))){ ###unidentified
+if(tax_table(DummyTOTUF)[j,"Classification"]=="Fungi" | tax_table(DummyTOTUF)[j,"Classification"]=="unidentified" | is.na(tax_table(DummyTOTUF)[j,"Classification"])) {
+tax_table(DummyTOTUF)[j,"Classification"] <- taxa_names(DummyTOTUF)[j]
+} else {
+  next
+}
+if(is.na(tax_table(DummyTOTUF)[j,"Classification2"])) {
+tax_table(DummyTOTUF)[j,"Classification2"] <- taxa_names(DummyTOTUF)[j]
+} else {
+  next
+}  
+  }
+DummyTOTUF <- tax_glom(DummyTOTUF, taxrank = "Classification2", NArm=FALSE) ###
+DummyTOTUF <-prune_samples(sample_sums(DummyTOTUF)>=2000, DummyTOTUF)
+Vec[[i]] <- DummyTOTUF
+}
+
+#rarefy
+mylist.names <- c("ITS1_R1")
+Vec3 <- vector("list", length(mylist.names))
+names(Vec3) <- mylist.names
+for(i in 1:4){
+X <- min(sample_sums(Vec[[i]]))
+Vec3[[i]] <-rarefy_even_depth(Vec[[i]], sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+Diff <- setdiff((sample_names(Vec2[[i]])),(sample_names(Vec3[[i]])))
+print(paste("Original number of samples in", names(Vec3)[[i]], "are:", nsamples(Vec2[[i]]),".", length(Diff), "samples were removed after processing and filtering steps, which are:", list(Diff),". This gives a total of:",  nsamples(Vec[[i]]), "samples for this dataset,", sum((sample_data(Vec3[[i]])$T1Dstatus=="1")), "T1D and", sum((sample_data(Vec3[[i]])$T1Dstatus=="0")), "non-T1D"))
+cat('\n')
+}
+
+save(Vec, Vec3, file="./MycobiomeObjects.RData")
+```
