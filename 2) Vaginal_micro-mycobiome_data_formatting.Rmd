@@ -123,7 +123,7 @@ Feat <- load(file="/$HOME/Mothers_Vaginal_Features_Phyloseq_Obj_Filtered1.RData"
 tax_table(Mother_VCMCFHS_AFilt1) <- tax_table(Mother_VCMCFHS_AFilt1)[, 1:7]
 colnames(tax_table(Mother_VCMCFHS_AFilt1)) <- c("Kindom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
-NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2.csv", header=TRUE, row.names=1, sep="\t")
+NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged.csv", header=TRUE, row.names=1, sep="\t")
 
 PhyTree <- read_tree("/$HOME/rooted-tree_Vaginal.nwk")
 
@@ -137,7 +137,7 @@ tax_table(Mother_VCMCFHS_AFilt1)["7d35d4541ed0fb016dad07caad37f556",] <- tax_tab
 tax_table(Mother_VCMCFHS_AFilt1)["297edc18fabd1d1b3234f8ef062a36c2",] <- tax_table(Mother_VCMCFHS_AFilt1)["e716d8c424a91dc74faa15671716cfc1",]
 tax_table(Mother_VCMCFHS_AFilt1)["30d3ed513d2487ebacec1d3806b5ccae",] <- tax_table(Mother_VCMCFHS_AFilt1)["563395e43ea73827809d66727b023e5b",]
 
-NewClass <- read.table(file="/Users/schulze.a/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/ENDIA_Run_17 Vaginal/BLASTn_classification_vaginal_microbiome2.csv", header=TRUE, row.names=1, sep="\t")
+NewClass <- read.table(file="/$HOME/BLASTn_classification_vaginal_microbiome2.csv", header=TRUE, row.names=1, sep="\t")
 NewClass[,"Good_Class"] <- as.character(NewClass[,"Good_Class"])
 NewClass[,"Genus"] <- as.character(NewClass[,"Genus"])
 tax_table(Mother_VCMCFHS_AFilt1) <- tax_table(Mother_VCMCFHS_AFilt1)[,c("Kindom", "Phylum", "Class", "Order", "Family", "Genus", "Species")]
@@ -306,5 +306,93 @@ print(paste("Original number of samples in", names(Vec3)[[i]], "are:", nsamples(
 cat('\n')
 }
 
-save(Vec, Vec3, file="./MycobiomeObjects.RData")
+#Create other taxonomic levels
+#taxG <- c("G_ITS1_R1", "G_ITS1_R2", "G_ITS2_R1", "G_ITS2_R2", "F_ITS1_R1", "F_ITS1_R2", "F_ITS2_R1", "F_ITS2_R2", "O_ITS1_R1", "O_ITS1_R2", "O_ITS2_R1", "O_ITS2_R2", "P_ITS1_R1", "P_ITS1_R2", "P_ITS2_R1", "P_ITS2_R2")
+taxG <- c("G_ITS1_R1", "F_ITS1_R1", "O_ITS1_R1", "P_ITS1_R1")
+
+TaxRank <- c("Genus", "Family", "Order", "Phylum")
+Plot2 <- vector(mode = "list", length = 4)
+d=2
+e=1
+for(j in 1:4) {
+
+for(i in 1:1) {
+Dummy <- Vec3[[i]]
+X <- as.character(tax_table(Vec3[[i]])[,TaxRank[j]])
+X[X=="unidentified"] <- NA
+tax_table(Dummy)[,TaxRank[j]] <- X
+Dummy <- tax_glom(Dummy, taxrank = TaxRank[j], NArm=FALSE)
+for (l in 1:length(taxa_names(Dummy))){ 
+if(is.na(tax_table(Dummy)[l,TaxRank[j]])) {
+tax_table(Dummy)[l,TaxRank[j]] <- taxa_names(Dummy)[l]
+} else {
+  next
+}
+}
+#Dummy <- transform_sample_counts(Dummy, function(x) 100 * x/sum(x))
+Vec3[[d]] <- Dummy
+names(Vec3)[d] <- taxG[e]
+d=d+1
+e=e+1
+}
+  
+}
+
+#Create other taxonomic levels for unrarefied Vec
+Plot2 <- vector(mode = "list", length = 4)
+d=2
+e=1
+for(j in 1:4) {
+
+for(i in 1:1) {
+Dummy <- Vec[[i]]
+X <- as.character(tax_table(Vec[[i]])[,TaxRank[j]])
+X[X=="unidentified"] <- NA
+tax_table(Dummy)[,TaxRank[j]] <- X
+Dummy <- tax_glom(Dummy, taxrank = TaxRank[j], NArm=FALSE)
+for (l in 1:length(taxa_names(Dummy))){ 
+if(is.na(tax_table(Dummy)[l,TaxRank[j]])) {
+tax_table(Dummy)[l,TaxRank[j]] <- taxa_names(Dummy)[l]
+} else {
+  next
+}
+}
+#Dummy <- transform_sample_counts(Dummy, function(x) 100 * x/sum(x))
+Vec[[d]] <- Dummy
+names(Vec)[d] <- taxG[e]
+d=d+1
+e=e+1
+}
+  
+}
+
+#Create other taxonomic levels for unrarefied VecP that has the extra 50 samples
+Plot2 <- vector(mode = "list", length = 4)
+d=2
+e=1
+for(j in 1:4) {
+
+for(i in 1:1) {
+Dummy <- VecP[[i]]
+X <- as.character(tax_table(VecP[[i]])[,TaxRank[j]])
+X[X=="unidentified"] <- NA
+tax_table(Dummy)[,TaxRank[j]] <- X
+Dummy <- tax_glom(Dummy, taxrank = TaxRank[j], NArm=FALSE)
+for (l in 1:length(taxa_names(Dummy))){ 
+if(is.na(tax_table(Dummy)[l,TaxRank[j]])) {
+tax_table(Dummy)[l,TaxRank[j]] <- taxa_names(Dummy)[l]
+} else {
+  next
+}
+}
+#Dummy <- transform_sample_counts(Dummy, function(x) 100 * x/sum(x))
+VecP[[d]] <- Dummy
+names(VecP)[d] <- taxG[e]
+d=d+1
+e=e+1
+}
+  
+}
+
+save(Vec, VecP, Vec3, file="./MycobiomeObjects.RData")
 ```
