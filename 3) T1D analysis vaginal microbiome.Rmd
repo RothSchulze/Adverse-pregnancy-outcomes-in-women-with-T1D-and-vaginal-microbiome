@@ -94,12 +94,6 @@ library("vegan")
 library("reshape2")
 library("scales")
 library("lme4")
-library("lmerTest")
-library("Hmisc")
-library("emmeans")
-library("doBy")
-library("metagMisc")
-library("easyGgplot2")
 library("ggpubr")
 library("kableExtra")
 library("table1")
@@ -107,18 +101,11 @@ library("pscl")
 library("MASS")
 library("grid")
 library("boot")
-library("TMB") 
-library("glmmTMB") 
 library("bbmle")
 library("lmtest")
 library("DHARMa")
-library("predictmeans")
 library("car")
-library("modelsummary")
 library("forcats")
-library("microbiomeSeq")
-
-
 
 #####################################################
 # FUNCTIONS USED FOR DIFFERENTIAL ABUNDANCE ANALYSIS #
@@ -678,10 +665,10 @@ T1D: 160 samples
 Non-T1D: 150 samples 
 
 ```{r Imp.format, echo=FALSE}
-X <- load(file="/$HOME/MicrobiomeObjectsWHLAsamples.RData")
+X <- load(file="./MicrobiomeObjectsWHLAsamples.RData")
 #"Vec2"  "VecMy" "VecO"
 
-NewMet <- read.table(file="/Users/schulze.a/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/ENDIA_Run_17 Vaginal/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+NewMet <- read.table(file="./Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
 
 for(i in 1:5){
 Vec2[[i]] <- phyloseq(otu_table(Vec2[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec2[[i]]), phy_tree(Vec2[[i]]))
@@ -866,7 +853,7 @@ cat("Parity", '\n')
 ###Beta diversity HLA
 
 ```{r BetaTestOther2, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
-library(pairwiseAdonis)
+#library(pairwiseAdonis) # Pairwise comprisons were done using this package but, was done in a most recent R version 4.3.1
 for(i in 1:5){
 OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
 OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
@@ -885,34 +872,29 @@ Meta_df2$T1Dstatus <- as.factor(Meta_df2$T1Dstatus)
 Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
 Meta_df2$HLA <- as.factor(Meta_df2$HLA)
 
-#Package used to calculate 95%CI for R2
-library("psychometric")
 #interaction with T1Dstatus
 Adonis <- adonis2(D2 ~ SeqRun + Parity + BMI + T1Dstatus*HLA, data=Meta_df2) 
 #Calculate CI 95%
 CI.Rsq(0.004, n=281, k=6)
 #Where n is the number of samples in the comparison and k is the number of predictors
-if(i==1){
 #print(Adonis)
-Int <- (round(AdonisI$`Pr(>F)`[6], 4))
-} else {
+Interaction <- (round(Adonis$`Pr(>F)`[6], 4))
 ##Test pairwise HLA within levels of T1D status and T1D status within HLA levels
-library("pairwiseAdonis")
+
 #Factor to do pairwise
 Meta_df2$T1DHLA <- with(Meta_df2, interaction(T1Dstatus, HLA, sep = "x"))
-HLAT1D <- pairwise.adonis2(D2 ~ T1DHLA + SeqRun + Parity + BMI, Meta_df2, strata = NULL, nperm = 999)
-HLA_T1D <- HLAT1D$T1DxDR34_vs_T1DxDRXX # high versus low risk HLA type
-CI.Rsq(0.023, n=65, k=4)
-HLA_NT1D <- HLAT1D$`Non-T1DxDRXX_vs_Non-T1DxDR34`
-CI.Rsq(0.03, n=59, k=4)
-T1D_HLAXX <- HLAT1D$`Non-T1DxDRXX_vs_T1DxDRXX`
-CI.Rsq(0.13, n=63, k=4)
-T1D_HLAG3o4 <- HLAT1D$`Non-T1DxGroup3o4_vs_T1DxGroup3o4`
-CI.Rsq(0.042, n=157, k=4)
-T1D_HLA34 <- HLAT1D$`T1DxDR34_vs_Non-T1DxDR34`
-CI.Rsq(0.003, n=61, k=4)
-
-  }
+#pair.wise function ran in R version 4.3.1
+#HLAT1D <- pairwise.adonis2(D2 ~ T1DHLA + SeqRun + Parity + BMI, Meta_df2, strata = NULL, nperm = 999)
+#HLA_T1D <- HLAT1D$T1DxDR34_vs_T1DxDRXX # high versus low risk HLA type
+#CI.Rsq(0.023, n=65, k=4)
+#HLA_NT1D <- HLAT1D$`Non-T1DxDRXX_vs_Non-T1DxDR34`
+#CI.Rsq(0.03, n=59, k=4)
+#T1D_HLAXX <- HLAT1D$`Non-T1DxDRXX_vs_T1DxDRXX`
+#CI.Rsq(0.13, n=63, k=4)
+#T1D_HLAG3o4 <- HLAT1D$`Non-T1DxGroup3o4_vs_T1DxGroup3o4`
+#CI.Rsq(0.042, n=157, k=4)
+#T1D_HLA34 <- HLAT1D$`T1DxDR34_vs_Non-T1DxDR34`
+#CI.Rsq(0.003, n=61, k=4)
 }
 ```
 
@@ -994,6 +976,7 @@ for(i in 1:5){
     }
         
 #For plot
+library(stringr)
 Results$Taxa <- rownames(Results)
 colnames(Results)[7:10] <- c("Mean:NonT1D", "Mean:T1D", "SE:NonT1D", "SE:T1D" )
 X <- melt(Results[,c(5,7:11)], "Taxa")
@@ -1242,8 +1225,9 @@ CSTable$L90 <- CSTable[,14]>89
 #Plot
 sample_data(CSTableP)$CSTIV <- data.frame(otu_table(CSTableP))$CSTIV
 
-p <- plot_taxa(CSTableP, method = "hellinger", number.taxa = 6, grouping_column="T1Dstatus", filename = NULL)
-P1 <- p + scale_fill_manual(values=Personal_colors2) + scale_color_manual(values=Personal_colors2) + theme(legend.title = element_text(size=15, face="bold"), legend.text = element_text(size=15, face="italic"), axis.text.y =element_text(size=15), axis.text.x =element_blank())   
+#This plot was done using the R package microbiomeSeq in R version 4.3.1
+#p <- plot_taxa(CSTableP, method = "hellinger", number.taxa = 6, grouping_column="T1Dstatus", filename = NULL)
+#P1 <- p + scale_fill_manual(values=Personal_colors2) + scale_color_manual(values=Personal_colors2) + theme(legend.title = element_text(size=15, face="bold"), legend.text = element_text(size=15, face="italic"), axis.text.y =element_text(size=15), axis.text.x =element_blank())   
 #print(P1)
 CSTable2 <- CSTable
 for(s in 1:nrow(CSTable2)){
@@ -1308,9 +1292,10 @@ To <- data.frame(otu_table(NNameM))
 SPlot <- SPlot[,c(2:6,1)]
 TPlot <- as.matrix(data.frame(tax_table(NNameM)[1:6,]))
 NNameMCST <- phyloseq(otu_table(SPlot, taxa_are_rows = FALSE), sample_data(NNameM), tax_table(TPlot))
-p2 <- plot_taxa(NNameMCST, grouping_column = "T1Dstatus", method = "hellinger", number.taxa = 5, filename = NULL)
-P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
-print(P2)
+#Done using R version 4.3.1 package microbiomeSeq
+#p2 <- plot_taxa(NNameMCST, grouping_column = "T1Dstatus", method = "hellinger", number.taxa = 5, filename = NULL)
+#P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
+#print(P2)
 
 library("nnet")
 ###For doing mutinomial logistic regression 
@@ -1341,7 +1326,8 @@ T1D.0: Nulliparous women with T1D
 T1D.1: Multiparous women with T1D 
 
 ```{r CSTdistP, fig.height=5, fig.width=8, echo=FALSE, results='asis'}
-X <- which( colnames(CSTContM)=="T1DsParity")
+CSTContM$T1DsParity <- paste(CSTContM$T1Dstatus, CSTContM$Parity, sep=".")
+X <- which(colnames(CSTContM)=="T1DsParity")
 S <- table(CSTContM[,c(1,X)])
 Q1 <- S[,1:2]
 Q2 <- S[,3:4]
@@ -1397,9 +1383,10 @@ TPlot <- as.matrix(data.frame(tax_table(NNameM)[1:6,]))
 NNameMCST <- phyloseq(otu_table(SPlot, taxa_are_rows = FALSE), sample_data(NNameM), tax_table(TPlot))
 sample_data(NNameMCST)$T1DsParity <- c("Non-T1D.0",  "Non-T1D.1", "T1D.0", "T1D.1")
 #NNameM_Rel <- transform_sample_counts(NNameM, function(x) 100 * x/sum(x))
-p2 <- plot_taxa(NNameMCST, grouping_column = "T1DsParity", method = "hellinger", number.taxa = 5, filename = NULL)
-P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
-print(P2)
+#Plot was done using R version 4.3.1 and R package microbiomeSeq
+#p2 <- plot_taxa(NNameMCST, grouping_column = "T1DsParity", method = "hellinger", number.taxa = 5, filename = NULL)
+#P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
+#print(P2)
 ```
 
 ###CST distribution between T1D and non-T1D + BMI
@@ -1487,9 +1474,10 @@ TPlot <- as.matrix(data.frame(tax_table(NNameM)[1:6,]))
 NNameMCST <- phyloseq(otu_table(SPlot, taxa_are_rows = FALSE), sample_data(NNameM), tax_table(TPlot))
 sample_data(NNameMCST)$T1DsBMI <- c("Non-T1D.Normal",  "Non-T1D.Obese", "Non-T1D.Overweight", "Non-T1D.Underweight", "T1D.Normal",  "T1D.Obese", "T1D.Overweight", "T1D.Underweight")
 #NNameM_Rel <- transform_sample_counts(NNameM, function(x) 100 * x/sum(x))
-p2 <- plot_taxa(NNameMCST, grouping_column = "T1DsBMI", method = "hellinger", number.taxa = 5, filename = NULL)
-P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
-print(P2)
+#Plot was done using R version 4.3.1 and R package microbiomeSeq
+#p2 <- plot_taxa(NNameMCST, grouping_column = "T1DsBMI", method = "hellinger", number.taxa = 5, filename = NULL)
+#P2 <- p2 + scale_color_manual(values=Personal_colors2) + scale_fill_manual(values=Personal_colors2)  + theme(axis.text.x =element_blank())
+#print(P2)
 ```
 
 Note: Others=CSTV
@@ -1743,12 +1731,9 @@ print(kable(TBA) %>% kable_styling(bootstrap_options = "striped", full_width = F
 ##Description
 
 ```{r Myco, echo=FALSE, fig.height=12, fig.width=16}
-load(file="/$HOME/MycobiomeObjects.RData")
+load(file="./MycobiomeObjects.RData")
 
-#X <- load(file="/$HOME/MicrobiomeObjectsWHLAsamples.RData")
-#"Vec2" "VecO"
-
-NewMet <- read.table(file="/$HOME/Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+NewMet <- read.table(file="./Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
 
 for(i in 1:5){
 Vec[[i]] <- phyloseq(otu_table(Vec[[i]], taxa_are_rows = F), sample_data(NewMet), tax_table(Vec[[i]]), phy_tree(Vec[[i]]))
@@ -1877,7 +1862,7 @@ cat('\n')
 ```{r AdonisMyco, echo=FALSE, results ='asis', fig.height=10, fig.width=10}
 PlotList <- vector('list', length(5))
 
-for(i in 1:1){
+for(i in 1:5){
 Dummy <- Vec3[[i]]
 Dummy <- transform_sample_counts(Dummy, function(x) 100 * x/sum(x))
 Dummy  = transform_sample_counts(Dummy, function(x) log(1 + x) )
@@ -1923,7 +1908,7 @@ gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4
 
 ####Beta diversity HLA
 
-```{r BetaTestOther2, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+```{r BetaTestOther2My, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
 for(i in 1:5){
 OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
 OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
@@ -1948,7 +1933,7 @@ Adonis <- adonis2(D2 ~ Parity + BMI + T1Dstatus*HLA, data=Meta_df2)
 print(Adonis)
 #95% CI
 CI.Rsq(0.011, n=133, k=5)
-Int <- (round(AdonisI$`Pr(>F)`[6], 4))
+Int <- (round(Adonis$`Pr(>F)`[6], 4))
 
 }
 ```
@@ -2015,6 +2000,7 @@ rownames(MeanSE) <- TV
 MeanSE <- MeanSE[c(1:4,7:8),]
 }
 ##PLOT
+if(i==1 | i==3){
 MeanSE$Taxa <- rownames(MeanSE)
 X <- melt(MeanSE[,3:8], "Taxa")
 Y <- data.frame(str_split_fixed(X$variable, ":", 2))
@@ -2029,7 +2015,7 @@ ZSpe <- Z2
 }
 if(i==3){
 ZA <- rbind(ZSpe, Z2)
-}
+
 ZA$Taxa <- sub('_', ' ', ZA$Taxa)
 Z <- ZA$Taxa[duplicated(ZA$Taxa)]
 ZA$Taxa <- factor(ZA$Taxa, levels=c(Z))
@@ -2041,6 +2027,8 @@ pd <- position_dodge(0.5)
 p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`T1D status`, label=P))
 DAT1D_Myco <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x = element_text(angle = 45, hjust=1, size=17, face="italic")) + theme(legend.title = element_text(size=13, face="bold"))  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, hjust=1, color="black", size=6, check_overlap = TRUE) + ylab("log2-transformed fitted values") + scale_fill_manual(values=T1Dcol) + scale_color_manual(values=T1Dcol) + theme(legend.position='none')
 plot(DAT1D_Myco)
+}
+}
 }
 ```
 
@@ -2134,9 +2122,10 @@ for(i in 1:5){
             rownames(Results)[u] <- tax_table(VecOF)[DA_GG[u],Tax[i]]
           }  
         }
-        cat('\n####', Tax[i], "in", Dummy[k], '\n')
-        print(Results)
-      }
+        
+       print(Results) 
+    }
+    
 }
 ```
 
