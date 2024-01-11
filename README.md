@@ -63,3 +63,7 @@ Contains the code used to analyse the alpha and beta diversity and differential 
 -> MycobiomeObjects.RData: see above
 
 -> Metadata_8_17_Merged2PET1D.csv: This is the metadata per sample used for the analysis.
+
+**3)Adverse-pregnancy-outcomes-analysis-vaginal-microbiome.html**
+
+Contains the knitr file from 3) Adverse pregnancy outcomes analysis vaginal microbiome.Rmd
