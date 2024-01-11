@@ -28,12 +28,15 @@ Resulting output files:
 -> MicrobiomeObjectsWHLAsamples.RData: Filtered bacterial taxa aglomerated to OTU, Genus, Family, Order and Phylum taxonomic levels.
 -> MycobiomeObjects.RData: Filtered fungal taxa aglomerated to OTU, Genus, Family, Order and Phylum taxonomic levels.
 
-3) T1D analysis vaginal microbiome
+3) T1D analysis vaginal microbiome.Rmd
 Contains the code used to analyse the alpha and beta diversity and differential abundance of the vaginal bacterial and fungal microbiomes in the context of T1D status. Also the effect of HLA status was evaluated here. Input data:
 
 -> MicrobiomeObjectsWHLAsamples.RData: see above
 -> MycobiomeObjects.RData: see above
 -> Metadata_8_17_Merged2PET1D.csv: This is the metadata per sample used for the analysis.
+
+3)T1D-analysis-vaginal-microbiome.html
+Contains the knitr file from 3) T1D analysis vaginal microbiome.Rmd
 
 3) Adverse pregnancy outcomes analysis vaginal microbiome.Rmd
 Contains the code used to analyse the alpha and beta diversity and differential abundance of the vaginal bacterial and fungal microbiomes in the context of the pregnancy complications preeclampsia and pre-term delivery.
