@@ -4,19 +4,18 @@ author: "Alexandra Jazmin Roth Schulze"
 date: "`r Sys.Date()`"
 output:
   html_document:
-    number_sections: yes
-    toc: yes
-    toc_float: yes
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    toc_float: true
   html_notebook:
-    code_folding: hide
-    number_sections: yes
-    toc: yes
-    toc_float: yes
-  pdf_document:
-    toc: yes
-editor_options:
-  chunk_output_type: console
+    number_sections: true
+    toc: true
+    toc_float: true
+    code_folding: "show"
 urlcolor: blue
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r SESSION_INFO, echo=FALSE}
@@ -652,9 +651,12 @@ PERMANOVA_repeat_measures <- function(
 }
 ```
 
+
 #Vaginal microbiome
 
+
 ##Description
+
 
 For the complete analysis of bacterial and fungal components of the microbiome, pregnant women with T1D (n=161) and without T1D (n=150) each provided a vaginal swab sample in the third trimester of pregnancy; 11 with T1D and 10 without T1D provided samples in two different pregnancies and one without T1D provided a sample in three different pregnancies. 
 
@@ -690,12 +692,14 @@ MeanM <- mean(sample_sums(Vec2[[1]]))
 The Sample distribution of the vaginal microbiome between women with and without T1D:
 
 ```{r, Count1, echo=FALSE, results='asis'}
-print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 ```
 
 All the models for the microbiome were adjusted for SeqRun batch effect and mother ID as random effects and parity and BMI as fixed effects because we know from the literature that those have an important effect on the vaginal microbiome.
 
+
 ##Alpha diversity
+
 
 ```{r, AlphaAge, echo=FALSE}
 OTUVag_RA <- Vec2[[1]]
@@ -748,7 +752,9 @@ Rich_Plot12 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= T1Dstatus), al
 gridExtra::grid.arrange(Rich_Plot1, Rich_Plot12, ncol = 2)
 ```
 
+
 ##Beta diversity
+
 
 ```{r BetaTestAlone, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
 Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
@@ -807,7 +813,7 @@ RMAPres <- PERMANOVA_repeat_measures(
     permute_within=PW,
     blocks=BS, block_data=Meta_sub, 
     metadata_order = c(names(Meta_sub), names(PW)))
-print(RMAPres)
+#print(RMAPres)
 
 #Final model adjusting for parity and BMI (without interactions)
 #
@@ -831,7 +837,7 @@ RMAPres <- PERMANOVA_repeat_measures(
     permute_within=PW,
     blocks=BS, block_data=Meta_sub, 
     metadata_order = c(names(PW), names(Meta_sub)))
-print(RMAPres)
+kable(RMAPres) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 RMAPresR <- round(RMAPres$`Pr(>F)`[4], 4)
 RMAPresR2 <- round((RMAPres$R2[4]*100),2)
 
@@ -847,12 +853,14 @@ PlotJ[[i]] <- p_OTU12 + geom_point(size = 3)  + theme(axis.title.y = element_tex
 }
 cat("T1D status", '\n')
 gridExtra::grid.arrange(PlotJ[[1]], PlotJ[[2]], PlotJ[[3]], PlotJ[[4]], PlotJ[[5]], ncol = 3)
-cat("Parity", '\n')
+
 ```
+
 
 ###Beta diversity HLA
 
-```{r BetaTestOther2, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+
+```{r BetaTestOther2, echo=FALSE, fig.height=10, fig.width=10,  message=FALSE}
 #library(pairwiseAdonis) # Pairwise comprisons were done using this package but, was done in a most recent R version 4.3.1
 for(i in 1:5){
 OTU_Plot <- transform_sample_counts(Vec2[[i]], function(x) 100 * x/sum(x))
@@ -898,7 +906,11 @@ Meta_df2$T1DHLA <- with(Meta_df2, interaction(T1Dstatus, HLA, sep = "x"))
 }
 ```
 
+No significant differences were detected in this analysis which was performed in R version 4.3.1 because the pair.wise function doesn't work in the current R version.
+
+
 ##Differential abundance analysis
+
 
 ```{r DAT1D, echo=FALSE}
 for(i in 1:5){
@@ -1010,9 +1022,11 @@ plot(DAMicroT1D)
 }
 ```
 
+
 ###Differential abundance HLA
 
-```{r DAHLA, echo=FALSE}
+
+```{r DAHLA, echo=FALSE, results='asis'}
   for(i in 1:5){
   VecOF <- prune_samples(sample_sums(VecO[[i]]) > 5000, VecO[[i]])
   X <- cut(sample_data(VecOF)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
@@ -1081,8 +1095,8 @@ plot(DAMicroT1D)
      for(u in 1:length(DA_GG)){
        rownames(Results)[u] <- tax_table(VecOF)[DA_GG[u],Tax[i]]
      }
-     cat('\n####', Tax[i], "in", Dummy[k], '\n')
-     print(Results)
+     #cat('\n####', Tax[i], "in", Dummy[k], '\n')
+     print(kable(Results) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
     }
     if(k==2){
       Mean <- fit$coef[DA_GG,c(3,6)]
@@ -1092,8 +1106,8 @@ plot(DAMicroT1D)
       for(u in 1:length(DA_GG)){
         rownames(Results)[u] <- tax_table(VecOF)[DA_GG[u],Tax[i]]
       }
-      cat('\n####', Tax[i], "in", Dummy[k], '\n')
-      print(Results)
+      #cat('\n####', Tax[i], "in", Dummy[k], '\n')
+      print(kable(Results) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
     }
     if(k==3){
       Mean <- fit$coef[DA_GG,c(2,5)]
@@ -1103,8 +1117,8 @@ plot(DAMicroT1D)
       for(u in 1:length(DA_GG)){
         rownames(Results)[u] <- tax_table(VecOF)[DA_GG[u],Tax[i]]
       }
-      cat('\n####', Tax[i], "in", Dummy[k], '\n')
-      print(Results)
+      #cat('\n####', Tax[i], "in", Dummy[k], '\n')
+      print(kable(Results) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
     }
     if(k==4){
       Mean <- cbind(data.frame(rowMeans(fit$coef[DA_GG,c(1,4)])), data.frame(rowMeans(fit$coef[DA_GG,c(2,5)])))
@@ -1117,8 +1131,9 @@ plot(DAMicroT1D)
       for(u in 1:length(DA_GG)){
         rownames(Results)[u] <- tax_table(VecOF)[DA_GG[u],Tax[i]]
       }  
-      cat('\n####', Tax[i], "in", Dummy[k], '\n')
-      print(Results)
+      #cat('\n####', Tax[i], "in", Dummy[k], '\n')
+      cat('\n')
+      print(kable(Results) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
     }
        
     }
@@ -1126,7 +1141,9 @@ plot(DAMicroT1D)
 } 
 ```
 
+
 #CSTs and Lactobacillus spp.
+
 
 The vaginal microbiota in healthy women has been extensively characterised.  It is generally dominated by lactobacilli and can be classified into five community state types, four of which are dominated by a single lactobacillus species (Ravel et al, 2011). The community state types are: 
 
@@ -1253,19 +1270,20 @@ CSTContMChi <- CSTContM
 
 ```
 
-```{r T1Ddist, fig.height=7, fig.width=9, echo=FALSE}
+```{r T1Ddist, fig.height=7, fig.width=9, echo=FALSE, results='asis'}
 S <- table(CSTContM[,c("T1Dstatus")])
 U <- prop.table(table(CSTContM[,c("T1Dstatus")]))
 X <- data.frame(t(paste(S, "(", round(100*U,0), "%)", sep="")))
 colnames(X) <- c("Non-T1D", "T1D")
-kable(X) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
+print(kable(X) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 ```
 
 ###CST distribution between T1D and non-T1D
 
 Using multinommial logistic regression to test differences in frequencies of CST among T1D status and parity. Here the response variable is CST (which has more than 2 levels and hence is a multinomial logistic regression) and the explanatory are T1D status and Parity.
 
-```{r CSTdist, echo=FALSE, fig.height=4, fig.width=5, message=FALSE, results='asis'}
+```{r CSTdist, echo=FALSE, fig.height=4, fig.width=5, message=FALSE}
+#, results='asis'
 S <- table(CSTContM[,c("CSTtype","T1Dstatus")])
 S1 <- dcast(data.frame(S), CSTtype ~ T1Dstatus)
 S1$All <- S1$`Non-T1D` + S1$T1D
@@ -1313,7 +1331,9 @@ p <- (1 - pnorm(abs(z), 0, 1)) * 2
 kable(p) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 ```
 
+
 ###CST distribution between T1D and non-T1D + parity
+
 
 Where:
 
@@ -1325,7 +1345,7 @@ T1D.0: Nulliparous women with T1D
 
 T1D.1: Multiparous women with T1D 
 
-```{r CSTdistP, fig.height=5, fig.width=8, echo=FALSE, results='asis'}
+```{r CSTdistP, fig.height=5, fig.width=8, echo=FALSE}
 CSTContM$T1DsParity <- paste(CSTContM$T1Dstatus, CSTContM$Parity, sep=".")
 X <- which(colnames(CSTContM)=="T1DsParity")
 S <- table(CSTContM[,c(1,X)])
@@ -1389,7 +1409,9 @@ sample_data(NNameMCST)$T1DsParity <- c("Non-T1D.0",  "Non-T1D.1", "T1D.0", "T1D.
 #print(P2)
 ```
 
+
 ###CST distribution between T1D and non-T1D + BMI
+
 
 Where:
 
@@ -1482,7 +1504,9 @@ sample_data(NNameMCST)$T1DsBMI <- c("Non-T1D.Normal",  "Non-T1D.Obese", "Non-T1D
 
 Note: Others=CSTV
 
+
 ####Testing for differences in frequency of CSTs due to T1D status (BMI + Parity with interaction)
+
 
 Using multinommial logistic regression to test differences in frequencies of CST among T1D status and BMI
 
@@ -1502,11 +1526,13 @@ p1 <- (1 - pnorm(abs(z), 0, 1)) * 2
 kable(p1, caption = "Multinomial test T1D status with interactions") %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 ```
 
+
 ###Lactobacillus spp. distribution between T1D and non-T1D + parity
+
 
 The vaginal microbiomes of pregnant women with and without T1D is rich in total Lactobacillus spp, with ~70% of samples from either group being dominated by lactobacilli (>70%). Generally, nulliparous women have more prevalence/abundance of Lactobacillus,irrespective of T1D status and the difference is slightly larger within non-T1D women. This is consistent with the current differential abundance analysis in which we observed higher abundance of Lactobacillus in nulliparous than multiparous women irrespective of T1D status.
 
-```{r CSTdistLacto, fig.height=7, fig.width=9, echo=FALSE, results='asis'}
+```{r CSTdistLacto, fig.height=7, fig.width=9, echo=FALSE}
 for(k in 2:4){
 CSTContM$T1DsParity <- paste(CSTContM$T1Dstatus, CSTContM$Parity, sep=".")
 X <- which( colnames(CSTContM)=="T1DsParity" )
@@ -1606,9 +1632,11 @@ kable(X6) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, p
 
 ```
 
+
 ###Lactobacillus spp. distribution between T1D and non-T1D + BMI
 
-```{r CSTdistLactoBMI, fig.height=7, fig.width=9, echo=FALSE, results='asis'}
+
+```{r CSTdistLactoBMI, fig.height=7, fig.width=9, echo=FALSE}
 for(k in 2:4){
 CSTContM <- subset(CSTContM, BMI_Cat!="NA")
 CSTContM$T1DsBMI <- paste(CSTContM$T1Dstatus, CSTContM$BMI_Cat, sep=".")
@@ -1711,11 +1739,13 @@ kable(X6) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, p
 
 ```
 
+
 ####Testing for differences in frequency of Lactobacillus dominated in T1D (+ Parity + BMI)
+
 
 Binomial logistic regression to test if the distribution (presence/absence) of Lactobacillus at certain percentage is significantly different depending on T1D status. The response variable is presence/absence of Lactobacillus (one test for each category >70%, >80% and >90%) and the explanatory variables are T1Dstatus and parity.
 
-```{r LogisticLacto, fig.height=7, fig.width=5, echo=FALSE, results='asis', results='asis'}
+```{r LogisticLacto, fig.height=7, fig.width=5, echo=FALSE, results='asis'}
 #Binomial logistic regression
 for(k in 2:4){
 cat("\n ***Lactobacillus abundance >", colnames(CSTContM[k]), "*** \n")
@@ -1726,7 +1756,9 @@ print(kable(TBA) %>% kable_styling(bootstrap_options = "striped", full_width = F
 }
 ```
 
+
 #Vaginal mycobiome
+
 
 ##Description
 
@@ -1751,7 +1783,7 @@ TB <- table(sample_data(Vec3[[1]])$T1Dstatus)
 For analysing the vaginal microbiome of women with and without T1D, there are a total of 144 samples for which we have the GBS status. The samples are distributed between women with and without T1D as follows:
 
 ```{r, Count, echo=FALSE, results='asis'}
-print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 ```
 
 Since there are no mothers repeated for this dataset, we don't need to take into account the effect of motherid in any of the analyses.
@@ -1760,7 +1792,9 @@ Since there are no mothers repeated for this dataset, we don't need to take into
 TaxLv <- list("Species" = 8, "Genus" = 6, "Family" = 5, "Order"=4, "Phylum"=2)
 ```
 
+
 ##Alpha diversity analysis 
+
 
 This analysis was done by subsampling the OTU table (features were categorised into OTUs based on the phylogenetic tree with threshold 0.03) each sample to 5000 sequences. 
 
@@ -1848,7 +1882,7 @@ IRT1D <- round(ResT1D$`Pr(>Chisq)`[1], 3)
 Rich_P <- plot_richness(Dummy, x="T1Dstatus", scales = "fixed", measures=c("Observed"))
 Rich_P$layers <- Rich_P$layers[-1]
 PlotObsPR <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= T1Dstatus), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=12)) + labs(color="T1Dstatus") + scale_fill_manual(values=c("blue", "red")) + scale_color_manual(values=c("blue", "red")) + geom_jitter()  + theme(legend.position='none') +annotate("text", label = paste("P=", RT1D), x=1.5,  y = 20, size = 6, colour = "black")
-PlotObsPR
+#PlotObsPR
 Rich_P <- plot_richness(Dummy, x="T1Dstatus", scales = "fixed", measures=c("InvSimpson"))
 PlotInvPR <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= T1Dstatus), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=14), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=15), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="T1Dstatus") + scale_fill_manual(values=c("blue", "red")) + scale_color_manual(values=c("blue", "red")) + geom_jitter() +annotate("text", label = paste("P=", IRT1D), x=1.5,  y = 20, size = 6, colour = "black")
 cat('\n')
@@ -1857,9 +1891,11 @@ gridExtra::grid.arrange(PlotObsPR, PlotInvPR, ncol = 2)
 cat('\n')
 ```
 
+
 ##Beta diversity analysis
 
-```{r AdonisMyco, echo=FALSE, results ='asis', fig.height=10, fig.width=10}
+
+```{r AdonisMyco, echo=FALSE, fig.height=10, fig.width=10}
 PlotList <- vector('list', length(5))
 
 for(i in 1:5){
@@ -1893,7 +1929,7 @@ Meta_df2 <- as.data.frame(Meta2)
 
 #Final model
 AdonisR <- adonis2(D2 ~  Parity + BMI + T1Dstatus,  data=Meta_df2) ##None of the combinations leaving only 1 confounder makes T1D to be significant, neither T1D by itself.
-print(AdonisR)
+kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 R <- AdonisR$`Pr(>F)`[3]
 ## 95% CI
 CI.Rsq(0.008, n=139, k=3)
@@ -1906,9 +1942,11 @@ BetaDivMyco <- PlotList[[i]]
 gridExtra::grid.arrange(PlotList[[1]], PlotList[[2]], PlotList[[3]], PlotList[[4]], PlotList[[5]], ncol = 3)
 ```
 
+
 ####Beta diversity HLA
 
-```{r BetaTestOther2My, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+
+```{r BetaTestOther2My, echo=FALSE, fig.height=10, fig.width=10, message=FALSE}
 for(i in 1:5){
 OTU_Plot <- transform_sample_counts(Vec3[[i]], function(x) 100 * x/sum(x))
 OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
@@ -1930,7 +1968,7 @@ Meta_df2$HLA <- as.factor(Meta_df2$HLA)
 #interaction with T1Dstatus
 Adonis <- adonis2(D2 ~ Parity + BMI + T1Dstatus*HLA, data=Meta_df2) 
 #if(i==1){
-print(Adonis)
+kable(Adonis) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 #95% CI
 CI.Rsq(0.011, n=133, k=5)
 Int <- (round(Adonis$`Pr(>F)`[6], 4))
@@ -1938,9 +1976,11 @@ Int <- (round(Adonis$`Pr(>F)`[6], 4))
 }
 ```
 
-##Differential abundance
 
-```{r DAMyco, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+##Differential abundance (T1D status)
+
+
+```{r DAMyco, echo=FALSE, fig.height=10, fig.width=10, message=FALSE}
 for(i in 1:5){
 VecOFilt <- Vec3[[i]]
 VecOFilt <- prune_samples(sample_sums(VecOFilt) > 5000, VecOFilt)
@@ -2032,9 +2072,11 @@ plot(DAT1D_Myco)
 }
 ```
 
+
 ###Differential abundance HLA
 
-```{r DAHLAMyc, echo=FALSE}
+
+```{r DAHLAMyc, echo=FALSE, results='asis'}
 for(i in 1:5){
   VecOF <- Vec3[[i]]
   X <- cut(sample_data(VecOF)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
@@ -2123,15 +2165,17 @@ for(i in 1:5){
           }  
         }
         
-       print(Results) 
+       print(kable(Results) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
     }
     
 }
 ```
 
-###Composed figures
 
-```{r Composed_F2, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+###Composed figures (T1D status for manuscript)
+
+
+```{r Composed_F2, echo=FALSE, fig.height=10, fig.width=10, message=FALSE}
 Plot2 <- ggarrange(PlotObsPR, BetaDivMyco, ncol=1, labels = c("B", "C"), font.label = list(size = 20))
 Plot3 <- ggarrange(Plot2, DAT1D_Myco, ncol=2, widths = c(1,2.5), labels = c("", "D"), font.label = list(size = 20))
 Plot4 <- ggarrange(DAMicroT1D, ncol = 1, labels = c("A"), font.label = list(size = 20)) + theme(plot.margin = margin(0.1,0.1,0.1,1, "cm"))
