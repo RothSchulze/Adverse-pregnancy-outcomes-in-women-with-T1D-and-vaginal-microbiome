@@ -750,6 +750,7 @@ ob_GAD <- glmer.nb(Observed ~ Parity + BMI_Cat + GAD + (1|motherid) + (1|SeqRun)
 
 ResObs <- Anova(ob_GAD)
 RGAD <- round(ResObs$`Pr(>Chisq)`[2], 2)
+print(kable(ResObs) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 sample_data(Dummy)$GAD <- relevel(sample_data(Dummy)$GAD, ref="Term")
 Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("Observed"))
@@ -760,6 +761,7 @@ Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1
 in_GAD <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity*GAD + BMI*GAD + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
 ResIn <- Anova(in_GAD)
 RIGAD <- round(ResIn$`Pr(>Chisq)`[2], 2)
+print(kable(ResIn) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 #### FOR CONTRASTS OF PE WITHIN A EACH BMI CATEGORIES  ############# 
 DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="Underweight")
@@ -788,16 +790,19 @@ DummyOb <- subset_samples(Dummy, BMI_Cat=="Obese")
 sample_data(DummyN)$GAD <- relevel(sample_data(DummyN)$GAD, ref = "Term")
 Rich_P <- plot_richness(DummyN, x="GAD", scales = "fixed", measures=c("InvSimpson"))
 Rich_P$layers <- Rich_P$layers[-1]
-Inv_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD") + theme(legend.position='none') + scale_fill_manual(values=GADcol) +  annotate("text", label =  paste("P=0.003"), x=1.5, y =5, size = 6, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter()
+Inv_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD") + ggtitle( paste("Normal weight") ) + theme(legend.position='none') + scale_fill_manual(values=GADcol) +  annotate("text", label =  paste("P=0.003"), x=1.5, y =5, size = 6, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter()
 IST1DMicroP <- Inv_Plot1
-
+IST1DMicroP
 #InvSimpson Obese
 sample_data(DummyOb)$GAD <- relevel(sample_data(DummyOb)$GAD, ref = "Term")
 Rich_P <- plot_richness(DummyOb, x="GAD", scales = "fixed", measures=c("InvSimpson"))
 Rich_P$layers <- Rich_P$layers[-1]
-Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=12), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD")  + ggtitle( paste("Obese") ) + scale_fill_manual(values=GADcol) +  annotate("text", label = paste("P=0.07"), x=1.5, y =5, size = 4, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter() + theme(legend.position='none') 
+Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=12), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=12), axis.text.x=element_blank(), plot.title = element_text(size=12)) + theme(legend.title = element_text(size=12), legend.text = element_text(size=12)) + labs(color="GAD")  + ggtitle( paste("Obese women") ) + scale_fill_manual(values=GADcol) +  annotate("text", label = paste("P=0.07"), x=1.5, y =5, size = 4, colour = "black") + scale_color_manual(values=GADcol) + geom_jitter() + theme(legend.position='none') 
 IST1DMicroP_Ob <- Inv_Plot3
+IST1DMicroP_Ob
 ```
+
+Analysis within each category of BMI was performed in R version 4.3.1 with the emmeans package (code shown in Rmd file)
 
 ###Beta diversity
 
@@ -832,7 +837,7 @@ Meta2_df$BMI_Cat <- cut(Meta2_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = 
 Meta2_df$BMI_Cat <- as.factor(Meta2_df$BMI_Cat)
 
 AdonisR <- adonis2(D2 ~  SeqRun + Parity*GAD + BMI*GAD, strata=Meta2_df$motherid, data=Meta2_df) # Interactions no significant, neither GAD
-print(AdonisR)
+kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left")
 A2Res <- round(AdonisR$`Pr(>F)`[3], 4)
 ## 95% CI
 CI.Rsq(0.002, n=145, k=6)
@@ -921,6 +926,7 @@ for(i in 1:5){
     pd <- position_dodge(0.5)
     p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`Delivery status`, label=adj.P.Val))
     DAResultsPD_MicroP <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y =element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x = element_text(angle = 45, hjust=1, size=16, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none')
+DAResultsPD_MicroP
    
 ```
 
@@ -928,7 +934,6 @@ for(i in 1:5){
 
 ```{r PlotsPD1, echo=FALSE}
 F3<-  ggarrange(IST1DMicroP, DAResultsPD_MicroP, ncol = 2, labels = c("A", "B"), font.label = list(size = 18)) #, common.legend = TRUE (11, 5.5)
-F3
 print(F3)
 ```
 
@@ -999,6 +1004,7 @@ DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
 ob_PE <- glmer.nb(Observed ~ BMI_Cat*Any.PE +  Parity*Any.PE + (1|motherid) + (1|SeqRun), data=DivCal_R_df)
 ResObs <- Anova(ob_PE)
 RPE <- round(ResObs$`Pr(>Chisq)`[2], 2)
+print(kable(ResObs) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 Dummy <- subset_samples(Dummy, Any.PE!="NA")
 Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("Observed"))
@@ -1008,6 +1014,7 @@ Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=
 # InvSimpson
 in_PE <- glmer.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|motherid)  + (1|SeqRun), data=DivCal_R_df)
 ResObs3 <- Anova(in_PE)
+print(kable(ResObs3) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 #### FOR CONTRASTS OF PE WITHIN A EACH BMI CATEGORIES  ##########################################
 DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="Underweight")
@@ -1034,13 +1041,16 @@ DummyOb <- subset_samples(Dummy, BMI_Cat=="Obese")
 #InvSimpson normal weight
 Rich_P <- plot_richness(DummyN, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
 Rich_P$layers <- Rich_P$layers[-1]
-Inv_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=0.007"), x=1.5, y =5.5, size = 6, colour = "black") + theme(legend.position='none')
-
+Inv_Plot2 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + ggtitle( paste("Normal weight")) + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=0.007"), x=1.5, y =5.5, size = 6, colour = "black") + theme(legend.position='none')
+Inv_Plot2
 #InvSimpson Overweight
 Rich_P <- plot_richness(DummyOv, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
 Rich_P$layers <- Rich_P$layers[-1]
-Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=0.04"), x=1.5, y =5, size = 6, colour = "black")  + theme(legend.position='none')
+Inv_Plot3 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=0.1, size=1)  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_blank()) + theme(axis.text.y =element_text(size=16), axis.text.x=element_blank(), plot.title = element_text(size=15))  + theme(legend.title = element_text(size=15), legend.text = element_text(size=15)) + labs(color="Any.PE") + ggtitle( paste("Overweight women"))  + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + geom_jitter() +  annotate("text", label = paste("P=0.04"), x=1.5, y =5, size = 6, colour = "black")  + theme(legend.position='none')
+Inv_Plot3
 ```
+
+Analysis of contrast within each category of BMI was performed in R vaersion 4.3.1 using emmeans package (code shown in Rmd).
 
 ###Beta diversity
 
@@ -1078,7 +1088,7 @@ Meta_df2$HLA <- as.factor(Meta_df2$HLA)
 
 #testing interaction between parity and BMI with Preeclampsia --> They were not significant
 AdonisR <- adonis2(D2 ~  SeqRun +  Parity*Any.PE + BMI*Any.PE + HLA*Any.PE, strata=Meta_df2$motherid,  data=Meta_df2)
-print(AdonisR)
+print(kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 A2Res <- round(AdonisR$`Pr(>F)`[3], 2)
 ## 95% CI
 CI.Rsq(0.005, n=154, k=8)
@@ -1184,6 +1194,7 @@ ZA$Taxa <- factor(ZA$Taxa, levels=Lv)
 p2 <- ggplot(ZA, aes(x=Taxa, y=MEAN, colour=`Preeclampsia status`, label=adj.P.Val))
 pd <- position_dodge(0.5)
 DAMicroPE <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16), axis.text.x = element_text(angle = 45, hjust=1, size=16, face="italic")) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none')
+DAMicroPE
 ```
 
 ###Composed plots
@@ -1288,6 +1299,7 @@ DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
 ob_GAD <- glm.nb(Observed ~ Parity*GAD + BMI_Cat*GAD, data=DivCal_R_df) #Removing interactions from the model (because they are not significant) does not produce a significant difference in the variable of interest, it is still NOT significant
 ResObs <- Anova(ob_GAD)
 RGAD <- round(ResObs$`Pr(>Chisq)`[2], 2)
+print(kable(ResObs) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 Dummy <- subset_samples(Dummy, GAD!="NA")
 Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("Observed"))
@@ -1298,6 +1310,7 @@ Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= GAD), alpha=0.1
 in_GAD <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ BMI_Cat*GAD + Parity*GAD, data=DivCal_R_df) #Removing interactions from the model (because they are not significant) does not produce a significant difference in the variable of interest, it is still NOT significant
 ResObs3 <- Anova(in_GAD)
 IRGAD <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+print(kable(ResObs3) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 Rich_P <- plot_richness(Dummy, x="GAD", scales = "fixed", measures=c("InvSimpson"))
 Rich_P$layers <- Rich_P$layers[-1]
@@ -1333,7 +1346,7 @@ Meta2_df$GAD <- as.factor(Meta2_df$GAD)
 Meta2_df$BMI <- as.numeric(Meta2_df$BMI)
 
 AdonisR <- adonis2(D2 ~  Parity*GAD + GAD*BMI, data=Meta2_df) 
-print(AdonisR)
+print(kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 A2Res <- round(AdonisR$`Pr(>F)`[3], 4)
 
 ## 95% CI
@@ -1392,6 +1405,8 @@ summary(DT)
 TT <- topTable(fitc, coef = "GAD", n=Inf)
 }
 ```
+
+There were no significant differences in specific taxa
 
 ##Preeclampsia (PE)
 
@@ -1460,6 +1475,7 @@ DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
 ob_PE <- glm.nb(Observed ~ BMI_Cat*Any.PE + Parity*Any.PE, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still NOT significant
 ResObs <- Anova(ob_PE)
 RPE <- round(ResObs$`Pr(>Chisq)`[2], 2)
+print(kable(ResObs) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 
 Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("Observed"))
 Rich_P$layers <- Rich_P$layers[-1]
@@ -1469,6 +1485,8 @@ Rich_Plot1 <- Rich_P + geom_boxplot(data=Rich_P$data, aes(color= Any.PE), alpha=
 in_PE <- glm.nb(round(((DivCal_R_df$InvSimpson)*1000),0) ~ BMI_Cat*Any.PE + Parity*Any.PE, data=DivCal_R_df) #Removing interactions from the model (since they were not significant), does not produce a significant difference in the variable of interest, it is still NOT significant
 ResObs3 <- Anova(in_PE)
 IRPE <- round(ResObs3$`Pr(>Chisq)`[2], 3)
+print(kable(ResObs3) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+
 #print(ResObs3)
 
 Rich_P <- plot_richness(Dummy, x="Any.PE", scales = "fixed", measures=c("InvSimpson"))
@@ -1511,7 +1529,7 @@ Meta_df2 <- subset(Meta_df2, HLA!="NA")
 
 #testing interaction between parity, BMI and HLA with Preeclampsia --> Nothing and any taxonomic level including species
 AdonisR <- adonis2(D2 ~  Parity*Any.PE + BMI*Any.PE + HLA*Any.PE,  data=Meta_df2)
-print(AdonisR)
+print(kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
 A2Res <- round(AdonisR$`Pr(>F)`[2], 2)
 
 ## 95% CI
@@ -1568,5 +1586,8 @@ for(i in 1:5){
   summary(DT)
   
   TT <- topTable(fitc, coef = "PE", n=Inf)
+  
 }
 ```
+
+There were no significant differences in specific taxa
