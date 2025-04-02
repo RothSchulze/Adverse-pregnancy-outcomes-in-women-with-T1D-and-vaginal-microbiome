@@ -1,0 +1,2508 @@
+---
+title: "Adverse pregnancy outcomes analysis vaginal microbiome 2025"
+author: "Alexandra Jazmin Roth Schulze"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+---
+
+```{r SESSION_INFO, echo=FALSE}
+#R version 4.4.2 (2024-10-31)
+#Platform: x86_64-apple-darwin20
+#Running under: macOS Monterey 12.7.6
+
+#Matrix products: default
+#BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+#LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+#Random number generation:
+# RNG:     Mersenne-Twister 
+# Normal:  Inversion 
+# Sample:  Rounding 
+ 
+#locale:
+#en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+#time zone: America/Mexico_City
+#tzcode source: internal
+
+#attached base packages:
+#stats4    grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+#other attached packages:
+# microbiomeSeq_0.1  forcats_1.0.0      car_3.1-3          carData_3.0-5      DHARMa_0.4.7       lmtest_0.9-40      zoo_1.8-12         bbmle_1.0.25.1     glmmTMB_1.1.10     TMB_1.9.15        
+# boot_1.3-31        MASS_7.3-61        kableExtra_1.4.0   ggpubr_0.6.0       metagMisc_0.5.0    doBy_4.6.25        Hmisc_5.2-0        lme4_1.1-35.5      Matrix_1.7-1       scales_1.3.0      
+# reshape2_1.4.4     vegan_2.6-4        lattice_0.22-6     permute_0.9-7      phyloseq_1.50.0    edgeR_4.4.0        limma_3.62.1       matrixStats_1.4.1  RColorBrewer_1.1-3 plotly_4.10.4     
+# ade4_1.7-22        dplyr_1.1.4        Rcpp_1.0.13-1      data.table_1.16.2  ggplot2_3.5.1      knitr_1.49         emmeans_1.10.5    
+
+#loaded via a namespace (and not attached):
+# splines_4.4.2           later_1.3.2             tibble_3.2.1            XML_3.99-0.17           rpart_4.1.23            lifecycle_1.0.4         Rdpack_2.6.2            sf_1.0-19              
+#rstatix_0.7.2           insight_1.0.2           backports_1.5.0         magrittr_2.0.3          rmarkdown_2.29          yaml_2.3.10             adespatial_0.3-24       httpuv_1.6.15          
+# sp_2.1-4                cowplot_1.1.3           DBI_1.2.3               minqa_1.2.8             abind_1.4-8             zlibbioc_1.52.0         purrr_1.0.2             BiocGenerics_0.52.0    
+# nnet_7.3-19             GenomeInfoDbData_1.2.13 IRanges_2.40.0          S4Vectors_0.44.0        units_0.8-5             performance_0.13.0      adegenet_2.1.10         svglite_2.1.3          
+# codetools_0.2-20        xml2_1.3.6              adephylo_1.1-16         tidyselect_1.2.1        RNeXML_2.4.11           farver_2.1.2            UCSC.utils_1.2.0        base64enc_0.1-3        
+# jsonlite_1.8.9          multtest_2.62.0         e1071_1.7-16            phylobase_0.8.12        Formula_1.2-5           survival_3.7-0          iterators_1.0.14        systemfonts_1.1.0      
+# foreach_1.5.2           tools_4.4.2             progress_1.2.3          glue_1.8.0              gridExtra_2.3           xfun_0.49               mgcv_1.9-1              GenomeInfoDb_1.42.0    
+# numDeriv_2016.8-1.1     withr_3.0.2             fastmap_1.2.0           latticeExtra_0.6-30     rhdf5filters_1.18.0     fansi_1.0.6             spData_2.3.3            digest_0.6.37          
+# R6_2.5.1                mime_0.12               estimability_1.5.1      microbenchmark_1.5.0    colorspace_2.1-1        wk_0.9.4                jpeg_0.1-10             utf8_1.2.4             
+#tidyr_1.3.1             generics_0.1.3          class_7.3-22            prettyunits_1.2.0       httr_1.4.7              htmlwidgets_1.6.4       spdep_1.3-6             pkgconfig_2.0.3        
+# gtable_0.3.6            XVector_0.46.0          adegraphics_1.0-21      htmltools_0.5.8.1       biomformat_1.34.0       Biobase_2.66.0          png_0.1-8               reformulas_0.4.0       
+# rstudioapi_0.17.1       rncl_0.8.7              uuid_1.2-1              checkmate_2.3.2         nlme_3.1-166            nloptr_2.1.1            bdsmatrix_1.3-7         proxy_0.4-27           
+# rhdf5_2.50.0            stringr_1.5.1           KernSmooth_2.23-24      parallel_4.4.2          foreign_0.8-87          s2_1.1.7                pillar_1.9.0            vctrs_0.6.5            
+# promises_1.3.0          xtable_1.8-4            Deriv_4.1.6             cluster_2.1.6           htmlTable_2.4.3         evaluate_1.0.1          mvtnorm_1.3-2           cli_3.6.3              
+# locfit_1.5-9.10         compiler_4.4.2          rlang_1.1.4             crayon_1.5.3            ggsignif_0.6.4          labeling_0.4.3          modelr_0.1.11           interp_1.1-6           
+# classInt_0.4-10         plyr_1.8.9              stringi_1.8.4           viridisLite_0.4.2       deldir_2.0-4            munsell_0.5.1           Biostrings_2.74.0       lazyeval_0.2.2         
+# hms_1.1.3               Rhdf5lib_1.28.0         statmod_1.5.0           seqinr_4.2-36           shiny_1.9.1             rbibutils_2.3           igraph_2.1.1            broom_1.0.7            
+# ape_5.8      
+```
+
+```{r Details1, include=FALSE}
+options(width = 90)
+library("ggplot2")
+library(knitr)
+opts_chunk$set(comment = NA, warning=FALSE, message=FALSE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+theme_set(theme_bw())
+pal = "Set1"
+scale_colour_discrete <- function(palname = pal, ...) {
+    scale_colour_brewer(palette = palname, ...)
+}
+scale_fill_discrete <- function(palname = pal, ...) {
+    scale_fill_brewer(palette = palname, ...)
+}
+```
+
+```{r PackageLoad, tidy=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+library("data.table")
+library("Rcpp")
+library("dplyr")
+library("ggplot2")
+library("ade4")
+library("plotly")
+library("RColorBrewer")
+library("matrixStats")
+library("knitr")
+library("RColorBrewer")
+library("limma")
+library("edgeR")
+library("phyloseq")
+library("vegan")
+library("reshape2")
+library("scales")
+library("lme4")
+library("ggpubr")
+library("kableExtra")
+library("MASS")
+library("grid")
+library("boot")
+library("TMB") 
+library("bbmle")
+library("lmtest")
+library("DHARMa")
+library("car")
+library("forcats")
+library("psychometric")
+library("stringr")
+library("glmmTMB")
+
+```
+
+```{r RMAPfunction, echo=FALSE}
+
+#@@@IMPORTANT, THIS WAS MODIFIED TO USE adonis2 --> there seems to be a problem with adonis check: https://github.com/joey711/phyloseq/issues/1457
+#Beta diversity function repeated-measure aware permutation
+## Function to perform PERMANOVA analysis with repeat measure-aware permutations 
+PERMANOVA_repeat_measures <- function(
+  D, permute_within, blocks = NULL, block_data, permutations=999,
+  metadata_order = c(names(permute_within), names(block_data)),
+  na.rm=F) {
+  
+  # Make sure D is a dist object
+  if (class(D) != "dist") {
+    stop("D must be a dist object")
+  }
+  
+  # Default to free permutations if blocks is not given
+  if (!missing(block_data) && is.null(blocks)) {
+    stop("blocks must be given if block_data is present")
+  } else if (is.null(blocks)) {
+    blocks <- rep(1, nrow(permute_within))
+    block_data <- as.data.frame(matrix(0, nrow=1, ncol=0))
+  } else if (length(unique(blocks)) == 1) {
+    warning("blocks only contains one unique value")
+  }
+  
+  # Ensure no metadata overlap between permute_within and block_data
+  if (length(intersect(names(permute_within), names(block_data))) > 0) {
+    stop("metadata is repeated across permute_within and block_data")
+  }
+  
+  # Ensure that metadata_order only contains stuff in permute_within and block_data
+  if(length(setdiff(metadata_order, union(names(permute_within), names(block_data)))) > 0) {
+    stop("metadata_order contains metadata not in permute_within and block_data")
+  }
+  
+  # Ensure that the data in permute_within matches that in dist
+  ord <- rownames(as.matrix(D))
+  if (length(ord) != nrow(permute_within) || length(blocks) != length(ord)) {
+    stop("blocks, permute_within, and D are not the same size")
+  }
+  if (is.null(rownames(permute_within))) {
+    warning("permute_within has no rownames - can't verify sample orders")
+  } else if (!all(ord == rownames(permute_within))) {
+    stop("rownames do not match between permute_within and D")
+  }
+  
+  # Ensure matching between blocks and block_data
+  if (any(is.na(blocks))) {
+    stop("NAs are not allowed in blocks")
+  }
+  if (is.factor(blocks)) {
+    if (length(levels(blocks)) != nrow(block_data)) {
+      stop("block_data does not have as many rows as blocks has levels")
+    }
+    if (!is.null(rownames(block_data)) && any(rownames(block_data) != levels(blocks))) {
+      stop("block_data rownames does not match the levels of blocks")
+    }
+    # Discard level information
+    blocks <- as.numeric(blocks)
+  } else if (is.numeric(blocks)) {
+    if (blocks < 1 || max(blocks) > nrow(block_data)) {
+      stop("Numeric blocks has indices out of range")
+    }
+  } else if (is.character(blocks)) {
+    if (is.null(rownames(block_data)) || !all(blocks %in% rownames(block_data))) {
+      stop("blocks does not match the rownames of block_data")
+    }
+    # Transform to numeric
+    blocks <- match(blocks, rownames(block_data))
+  } else {
+    stop("blocks must be a numeric, factor, or character vector")
+  }
+  
+  # Error out on NA metadata rather than allowing adonis to error out with
+  # a totally nonsensical error message
+  if (any(is.na(permute_within)) || any(is.na(block_data))) {
+    if (na.rm) {
+      n_prerm <- length(blocks)
+      
+      # Remove NAs in block_data
+      hasna <- (rowSums(is.na(block_data)) > 0) | (sapply(split(rowSums(is.na(permute_within)) > 0, blocks), mean) == 1)
+      block_data <- block_data[!hasna,, drop=F]
+      keep <- !hasna[blocks]
+      blocks <- cumsum(!hasna)[blocks]
+      
+      blocks <- blocks[keep]
+      permute_within <- permute_within[keep,, drop=F]
+      D <- as.matrix(D)[keep, keep]
+      # block_data is not subset, as the rows with NAs are no longer referenced in blocks
+      
+      # Remove NAs in permute_within
+      keep <- rowSums(is.na(permute_within)) == 0
+      blocks <- blocks[keep]
+      permute_within <- permute_within[keep,, drop=F]
+      D <- as.dist(D[keep, keep])
+      
+      if (length(blocks) < ncol(permute_within) + ncol(block_data)) {
+        stop(sprintf("After omitting samples with NAs, the number of samples (%d) is less than the number of metadata (%d)",
+                     length(blocks), ncol(permute_within) + ncol(block_data)))
+      } else if (length(blocks) < n_prerm * 0.5) {
+        warning(sprintf("Removed %d samples with NA metadata", n_prerm - length(blocks)))
+      }
+    } else {
+      stop("Some metadata is NA! adonis does not support any NA in the metadata")
+    }
+  }
+  
+  # Warn on some suspicious input
+  persample <- apply(permute_within, 1, function(x)is.factor(x) && !any(duplicated(x)))
+  if (any(persample)) {
+    warning(sprintf("%s in permute_within has one DOF per sample.", colnames(permute_within)[which(persample)[1]]))
+  }
+  if (length(unique(blocks)) < nrow(block_data)) {
+    warning("Not all blocks have a sample associated with them. Block permutations will still be performed over the full set of blocks - if this is not desired, subset block_data to only the blocks which appear in the data.")
+  }
+  if (!any(duplicated(blocks))) {
+    warning("blocks contains no duplicated elements")
+  }
+  
+  library(vegan)
+  library(permute)
+  
+  # Test statistic from non-permuted data
+  mtdat <- cbind(permute_within, block_data[blocks,,drop=F])
+  ad <- adonis2(D ~ ., permutations=0, data=mtdat[, metadata_order, drop=F])
+  R2 <- ad$R2
+  names(R2) <- rownames(ad)
+  
+  # Permutations
+  nullsamples <- matrix(NA, nrow=length(R2), ncol=permutations)
+  for (i in seq_len(permutations)) {
+    within.i <- shuffle(nrow(permute_within), control=how(blocks=blocks))
+    block.i <- sample(seq_len(nrow(block_data)))
+    mtdat <- cbind(
+      permute_within[within.i,,drop=F],
+      block_data[block.i,,drop=F][blocks,,drop=F])
+    perm.ad <- adonis2(D ~ ., permutations=0, data=mtdat[, metadata_order, drop=F])
+    
+    nullsamples[,i] <- perm.ad$R2
+  }
+  
+  # For residuals, test the other direction (i.e. p-value of all covariates)
+  n <- length(R2)
+  R2[n-1] <- 1 - R2[n-1]
+  nullsamples[n-1,] <- 1 - nullsamples[n-1,]
+  
+  # P value calculation similar to adonis's
+  exceedances <- rowSums(nullsamples > R2)
+  P <- (exceedances + 1) / (permutations + 1)
+  
+  P[n] <- NA    # No p-values for "Total"
+  ad$`Pr(>F)` <- P
+  
+  return (ad)
+}
+```
+
+#Vaginal microbiome adverse outcomes
+
+##Premature delivery (PD)
+
+###Description of samples used in this analysis
+
+```{r Imp.format3, echo=FALSE}
+setwd("~/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/2025 Sequencing processing with qiime2 2024.10/Vaginal project/Diabetologia submission 2025/Code and R objects/") #change your directory
+
+X <- load(file="./MicrobiomeObjects.RData")
+#"Bac"= Bacterial data without rarefaction    "Bac_RA"= Bacterial data with rarefaction
+
+for(i in 1:5){ #defining term and premature categorical factors based on Gestational age at delivery in weeks and filter samples from women who delivered by elective caesarean for unrarefied data
+  Bac[[i]] <- subset_samples(Bac[[i]], GA_at_Delivery_w!="NA")
+  X <- cut(sample_data(Bac[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Bac[[i]])$GAD <- X
+  sample_data(Bac[[i]])$GAD <- as.factor(sample_data(Bac[[i]])$GAD)
+  sample_data(Bac[[i]])$GAD_MOD <- paste(sample_data(Bac[[i]])$GAD, sample_data(Bac[[i]])$MOD, sep=".")
+  Bac[[i]] <- prune_taxa(taxa_sums(Bac[[i]]) > 30, Bac[[i]])
+  Bac[[i]] <- subset_samples(Bac[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Bac[[i]] <- subset_samples(Bac[[i]], T1Dstatus=="T1D")
+}
+
+for(i in 1:5){ #defining term and premature categorical factors  based on Gestational age at delivery in weeks and filter samples from women who delivered by elective caesarean for rarefied data
+  Bac_RA[[i]] <- subset_samples(Bac_RA[[i]], GA_at_Delivery_w!="NA")
+  X <- cut(sample_data(Bac_RA[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Bac_RA[[i]])$GAD <- X
+  sample_data(Bac_RA[[i]])$GAD <- as.factor(sample_data(Bac_RA[[i]])$GAD)
+  sample_data(Bac_RA[[i]])$GAD_MOD <- paste(sample_data(Bac_RA[[i]])$GAD, sample_data(Bac_RA[[i]])$MOD, sep=".")
+  Bac_RA[[i]] <- prune_taxa(taxa_sums(Bac_RA[[i]]) > 30, Bac_RA[[i]])
+  Bac_RA[[i]] <- subset_samples(Bac_RA[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Bac_RA[[i]] <- subset_samples(Bac_RA[[i]], T1Dstatus=="T1D")
+}
+
+TB <- table(sample_data(Bac_RA[[1]])$GAD)
+
+```
+
+For analysing the vaginal microbiome of women who had premature deliveries vs. women who had term deliveries only women **with T1D** were considered due to the number of premature deliveries being too small (n=7) in women without T1D. There are a total of 148 samples distributed as follows:
+
+```{r Count1, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+Premature: < 37 weeks of gestation.
+
+Term: > 37 weeks of gestation.
+
+###Alpha diversity
+
+```{r Alpha, echo=FALSE}
+OTUVag_RA <- Bac_RA[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+Dummy <- OTUVag_RA
+```
+
+glmer.nb was used for richness and invSimpson because the data distributes like a negative binomial and we have random factors [i.e. sequencing batch and motherid].
+
+```{r AlphaTest1, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+#Categorize variable GA at Delivery w into categorical "premature" vs "term" delivery = GAD = "Gestational age at delivery categorical"
+GADcol <- c("darkgreen", "darkorange")
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GAD <- factor(DivCal_R_df$GAD)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+DivCal_R_df2 <- subset(DivCal_R_df, BMI_Cat != "Underweight")
+DivCal_R_df2$BMI_Cat <- factor(DivCal_R_df2$BMI_Cat, levels=c("Normal", "Overweight", "Obese"))
+
+
+###############################     Observed richness
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Observed)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "Observed", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Observed)
+mean(DivCal_R_df$Observed)
+var(DivCal_R_df$Observed)#The variance (~120) is greater than the mean (~16)
+#If the dispersion ratio is significantly > 1, use Negative Binomial (family = "nbinom1" or "nbinom2").
+
+## Seems the distribution is a negative binomial, and we have overdispersion
+#Motherid should not be used here as a random factor because the levels of each factor only contain one sample. This means that for this subset, there are very few repeated measurements
+
+#Test using glmmTMB
+model_tmb <- glmmTMB(Observed ~ Parity * GAD + BMI_Cat * GAD + (1 | SeqRun), data = DivCal_R_df2, family = nbinom2)  # Negative Binomial model
+model_no_random <- glmmTMB(Observed ~ Parity * GAD + BMI_Cat * GAD, data = DivCal_R_df2, family = nbinom2)
+AIC(model_tmb, model_no_random)
+#AIC is a bit lower without SeqRun, so we can remove it.
+Anova(model_no_random)
+
+#Response: Observed
+#             Chisq Df Pr(>Chisq)
+#Parity      0.7290  1     0.3932
+#GAD         0.0025  1     0.9600
+#BMI_Cat     1.1850  2     0.5529
+#Parity:GAD  0.2250  1     0.6353
+#GAD:BMI_Cat 0.4136  2     0.8132
+#Since interactions are not significant we remove them
+model_no_R <- glmmTMB(Observed ~ Parity * GAD + BMI_Cat* GAD, data = DivCal_R_df2, family = nbinom2)
+model_no_RInter <- glmmTMB(Observed ~ Parity + BMI_Cat + GAD, data = DivCal_R_df2, family = nbinom2)
+AIC(model_no_R, model_no_RInter)
+#                df      AIC
+#model_no_R       9 1069.471
+#model_no_RInter  7 1065.889
+#AIC without the interaction is smaller, so we can keep that model
+sim_res <- simulateResiduals(model_no_RInter)
+plot(sim_res)
+#No deviation or problems detected
+
+ResObs <- Anova(model_no_RInter)
+summary(model_no_RInter)
+exp(confint(model_no_RInter, method = "profile"))
+
+#Response: Observed
+#            Chisq Df Pr(>Chisq)
+#Parity  1.1696  1     0.2795
+#BMI_Cat 1.6637  2     0.4353
+#GAD     0.0066  1     0.9351
+
+##################################     Chao1
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = Chao1)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Chao1", x = "Chao1", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Chao1)
+mean(DivCal_R_df2$Chao1)
+var(DivCal_R_df2$Chao1)
+
+Chao1_T1D <- glmmTMB(Chao1 ~ Parity*GAD + BMI_Cat*GAD + (1|SeqRun), data = DivCal_R_df2, family = gaussian)
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity*GAD + BMI_Cat*GAD + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+performance::check_overdispersion(Chao1_T1D_Gamma)
+AIC(Chao1_T1D, Chao1_T1D_Gamma) #Gamma is better
+res <- simulateResiduals(Chao1_T1D_Gamma)
+plot(res)
+Anova(Chao1_T1D_Gamma) #There are no interactions
+
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity + BMI_Cat + GAD + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+Anova(Chao1_T1D_Gamma) 
+summary(Chao1_T1D_Gamma)
+#P-value for GAD = 0.90
+exp(confint(Chao1_T1D_Gamma, method = "profile"))
+
+###############################     InvSimpson
+
+#InvSimpson is continuous data and we can still use glmmTMB
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = InvSimpson)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "InvSimpson", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$InvSimpson)
+#Data is not normaly distributed so we don't use Gaussian
+#Log transformed data  does not distribute normaly so we should not use Log-normal (Gaussian with log response).
+#Data has not many 0's so we don't use Tweedie.
+
+## The distribution is a negative binomial again but we have continuous data, so we use the negative binomial family
+## The distribution of the InvSimpson index appears to be right-skewed, with most values concentrated near 1 but a few larger values extending the tail. InvSimpson is a continuous variable that is positively skewed, meaning it does not follow a normal distribution. Since the Inverse Simpson index is always greater than 1, a Gamma distribution (which is positive and continuous) is a better fit than a Gaussian. The model includes categorical covariates and interactions (Parity*GAD, BMI_Cat*GAD), which affect how variance behaves. Diversity indices often follow Gamma-like distributions.
+
+model_gamma <- glmmTMB(InvSimpson ~ Parity*GAD + BMI_Cat*GAD + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+model_gamma_no_R <- glmmTMB(InvSimpson ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma, model_gamma_no_R) #We stay with model with no random effects
+#                 df      AIC
+#model_gamma      10 380.7728
+#model_gamma_no_R  9 378.7728
+model_gamma_no_RInter <- glmmTMB(InvSimpson ~ Parity*GAD + BMI_Cat, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_R, model_gamma_no_RInter) #Interaction with BMI must stay
+#                      df      AIC
+#model_gamma_no_R       9 378.7728
+#model_gamma_no_RInter  7 385.2949
+
+model_gamma_no_RInter2 <- glmmTMB(InvSimpson ~ Parity + BMI_Cat*GAD, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_R, model_gamma_no_RInter2) #Interaction with parity can be removed
+
+DivCal_R_df2$GAD <- factor(DivCal_R_df2$GAD, levels = c("Term", "Premature"))
+model_gamma_no_RInter3 <- glmmTMB(InvSimpson ~ BMI_Cat*GAD, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_RInter2, model_gamma_no_RInter3) # Parity can be removed 
+#                       df     AIC
+#model_gamma_no_RInter2  8 378.384
+#model_gamma_no_RInter3  7 376.521
+#model without parity is better
+
+sim_res <- simulateResiduals(model_gamma_no_RInter3)
+plot(sim_res)
+
+#Since in the model without random effects or Parity but with the interaction between BMI and GAD the AIC is smaller, we stay with that. 
+ResIn <- Anova(model_gamma_no_RInter3)
+print(kable(ResIn) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+#Interaction = 0.002884 **
+#Conduct Post-hoc Comparisons, using pairwise comparisons to understand differences
+ResEMPairwise <- emmeans(model_gamma_no_RInter3, pairwise ~ GAD | BMI_Cat)
+
+#       Premature - Term
+#   Normal P= 0.0035
+#   Overweight P= 0.7147
+#   Obese   P= 0.0667
+#See asymp.LCL and UCL in table with full details
+#ResSum <- summary(ResEMPairwise, type = "response")
+
+# Compute 95% CI in log scale (Normal weight)
+estimate <- 0.5719
+lower_log <- estimate - 1.96 * 0.193
+upper_log <- estimate + 1.96 * 0.193
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+# Compute 95% CI in log scale (Overweight)
+estimate <- 0.0551
+lower_log <- estimate - 1.96 * 0.166
+upper_log <- estimate + 1.96 * 0.166
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+# Compute 95% CI in log scale (Obese)
+estimate <- -0.2901 
+lower_log <- estimate - 1.96 * 0.16
+upper_log <- estimate + 1.96 * 0.16
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+#PLOT
+
+emm <- emmeans(model_gamma_no_RInter3, ~ BMI_Cat * GAD, type = "response") ## --> This extracts the estimated marginal means (EMMs) of the response variable on the original scale (because of type = "response"). Since your model has a log link, emmeans() automatically applies the inverse transformation (exp()) to return predictions on the InvSimpson scale.
+emm_df <- as.data.frame(emm)
+Alpha_GAD_Micro <- emm_df
+Alpha_GAD_Micro$GAD <- relevel(Alpha_GAD_Micro$GAD, ref="Term")
+
+save(Alpha_GAD_Micro, file="Data_Figure_3a.RData")
+#load(file="Data_Figure_3a.RData")
+
+Alpha_Microbiome_GAD <- ggplot(Alpha_GAD_Micro, aes(x = BMI_Cat, y = response, color = GAD, group = GAD)) +
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.2, size=1.5,  position = position_dodge(width = 0.3)) + geom_point(position = position_dodge(width = 0.3), size=3, shape=21, fill="white") +
+  labs(y = "Predicted response", size=18) +
+  theme_set(theme_bw()) +  annotate("text", label =  paste("p=0.009*"), fontface = "italic", x=1.2, y =1.7, size = 6, colour = "black") + annotate("text", label =  paste("p=0.74"), fontface = "italic", x=2, y =3, size = 6, colour = "black") +  annotate("text", label =  paste("p=0.11"), fontface = "italic", x=3, y =3, size = 6, colour = "black") + scale_y_continuous(labels = scales::number_format(accuracy = 0.1), limits = c(1, 4.5), breaks = seq(1, 4.5, by = 0.5)) + 
+  scale_color_manual(values = c("Term" = "darkgreen", "Premature" = "orange"))  +  theme(axis.title.y = element_text(size=18, colour = "black"), axis.title.x = element_text(size=16, colour = "black")) + theme(axis.text.y =element_text(size=16, colour = "black"), axis.text.x=element_text(size=16, colour = "black")) + theme(legend.title = element_text(size=16), legend.text = element_text(size=14))  +   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(legend.position='none') + theme(axis.title.x = element_blank()) #geom_line(position = position_dodge(width = 0.3), linewidth = 1) +
+Alpha_Microbiome_GAD
+
+save(Alpha_Microbiome_GAD, file="Alpha_Microbiome_GAD_Plot3a.RData")
+#load(file="Alpha_Microbiome_GAD_Plot3a.RData")
+
+
+######################################   Shannon
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = Shannon)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Shannon", x = "Shannon", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Shannon)
+mean(DivCal_R_df2$Shannon)
+var(DivCal_R_df2$Shannon)
+#glmmTMB #continuous
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon ~ Parity*GAD + BMI_Cat*GAD + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log")) #Since data has no zeroes,  a + 0.001 or tweedie is not needed.
+performance::check_overdispersion(Shannon_T1D_Gamma2)
+res <- simulateResiduals(Shannon_T1D_Gamma2)
+plot(res)
+
+Anova(Shannon_T1D_Gamma2) # No significant interactions
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon ~ Parity + BMI_Cat + GAD + (1|SeqRun), data = DivCal_R_df2, family = tweedie(link = "log"))
+Anova(Shannon_T1D_Gamma2) 
+summary(Shannon_T1D_Gamma2)
+#P-T1D = 0.5233
+exp(confint(Shannon_T1D_Gamma2, method = "profile"))
+
+#ADJUSTMENTS FOR MULTIPLE TESTING OF ALPHA DIVERSITY METRICS 
+###@@@@@@@@@@@@@@@@@@ BACTERIA
+p_adjBacGAD <- p.adjust(c(0.94, 0.9, 0.52), method = "BH", n=3) # these were applied across  metrics richness, Chao1 and Shannon
+p_adjBacGADBMI <- p.adjust(c(0.003, 0.74, 0.07), method = "BH", n=3) # these were applied within BMI levels in InvSimpson
+```
+
+###Beta diversity
+
+Interactions with parity and BMI were tested.
+
+```{r BetaTest1, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+OTU_Plot <- transform_sample_counts(Bac_RA[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D <- phyloseq::distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$GAD <- as.factor(Meta_df$GAD)
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta2_df <- as.data.frame(Meta2)
+Meta2_df$SeqRun <- as.factor(Meta2_df$SeqRun)
+Meta2_df$Parity <- as.factor(Meta2_df$Parity)
+Meta2_df$GAD <- as.factor(Meta2_df$GAD)
+Meta2_df$BMI <- as.numeric(Meta2_df$BMI)
+#CATEGORIZE BMI FOR TEST
+Meta2_df$BMI_Cat <- cut(Meta2_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+Meta2_df$BMI_Cat <- as.factor(Meta2_df$BMI_Cat)
+
+AdonisR <- adonis2(D2 ~  SeqRun + Parity*GAD + BMI_Cat*GAD, strata=Meta2_df$motherid, data=Meta2_df) # Interactions no significant
+AdonisR <- adonis2(D2 ~  SeqRun + Parity + BMI_Cat + GAD, strata=Meta2_df$motherid, data=Meta2_df) # GAD no significant
+print(AdonisR)
+
+  ## 95% CI
+  CI.Rsq(.00393 , n=143, k=4)
+}
+```
+
+###Differential abundance analysis
+
+```{r DAPDMicro, echo=FALSE}
+for(i in 1:5){
+  BacF <- Bac[[i]]
+  X <- cut(sample_data(BacF)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+  sample_data(BacF)$BMI_Cat <- X
+  BacF <- subset_samples(BacF, BMI_Cat!="NA")
+  BacF <- subset_samples(BacF, BMI_Cat!="Underweight")
+  
+  Counts <- as.data.frame(t(otu_table(BacF)))
+  # Metadata format
+  Meta_df <- as.data.frame(as.matrix(sample_data(BacF)))
+  Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+  contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+  Meta_df$Parity <- as.factor(Meta_df$Parity)
+  contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+  Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+  contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+  Meta_df$GAD <- as.factor(Meta_df$GAD)
+  contrasts(Meta_df$GAD) <- contr.sum(levels(Meta_df$GAD))
+  Meta_df$BMI_Cat <- as.factor(Meta_df$BMI_Cat)
+  contrasts(Meta_df$BMI_Cat) <- contr.sum(levels(Meta_df$BMI_Cat))
+  Meta_df$GAD_BMI <- as.factor(paste(Meta_df$GAD, Meta_df$BMI_Cat, sep="x"))
+  
+  #Design matrix
+  design <- model.matrix(~0 + GAD_BMI + Parity + SeqRun, data=Meta_df)
+  dge <- DGEList(Counts, group= Meta_df$GAD_BMI)
+  
+  #Filters
+  M <- dge$counts
+  M[M>0] <-1
+  keepP <- rowSums(M) > 36 #36 in at least 25% of the samples
+  #Filter from dge
+  dge <- dge[keepP,,keep.lib.sizes=FALSE]
+  dge <- dge[,which(!dge$samples$lib.size == 0)]
+  # Metadata
+  dgeN <- colnames(dge$counts)
+  MycoF <- prune_samples(as.character(dgeN), BacF)
+  Counts <- as.data.frame(otu_table(MycoF))
+  Meta_df <- as.data.frame(as.matrix(sample_data(MycoF)))
+  ##########################
+  
+  dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+  fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+  
+  #Contrast matrix
+  cont <- makeContrasts(GA=(GAD_BMIPrematurexNormal + GAD_BMIPrematurexObese + GAD_BMIPrematurexOverweight)/3-(GAD_BMITermxNormal + GAD_BMITermxObese + GAD_BMITermxOverweight)/3, levels=design)
+  
+  fitc <- contrasts.fit(fit, contrasts = cont)
+  fitc <- eBayes(fitc, robust=TRUE)
+  DT<- decideTests(fitc)
+  summary(DT)
+  
+  #top table of results
+  TT <- topTable(fitc, coef = "GA", n=1) #, confint=TRUE is added to obtain confidence intervals for the logFC
+  TO <- TT
+  TV<- vector()
+  
+  if(i==1){
+  Mean <- cbind(data.frame(mean(fit$coef[rownames(TO),c(1:3)])), data.frame(mean(fit$coef[rownames(TO),c(4:6)])))
+  colnames(Mean)[1:2] <- c("MEAN:Premature", "MEAN:Term")
+  SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+  SE <- cbind(data.frame(mean(SE[rownames(TO),c(1:3)])), data.frame(mean(SE[rownames(TO),c(4:6)])))
+  colnames(SE)[1:2] <- c("SE:Premature", "SE:Term")
+  Results <- cbind(TO[c(1:length(rownames(TO))),c(1,4:5)], Mean, SE)
+  Results <- Results[(Results$adj.P.Val<0.1),]
+  rownames(Results) <- tax_table(BacF)[rownames(TO),Tax[i]]
+  print(Results)
+  }
+
+    GADcol <- c("darkgreen", "darkorange")
+    #For plot
+    Results$Taxa <- rownames(Results)
+    X <- melt(Results[,3:8], "Taxa")
+    Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+    Z <- cbind(X[1], Y, X[3])
+    Z$X2[1:length(Results$adj.P.Val)] <- rep("Premature", length(Results$adj.P.Val))
+    Z2 <- dcast(Z, Taxa + X2 ~ X1)
+    Z2$adj.P.Val <- round(Z2$adj.P.Val, 3)
+    colnames(Z2)[2] <- "Delivery status"
+  }
+} 
+ZA <- Z2
+    #Prepare for plotting
+    ZA$Taxa <- as.factor(ZA$Taxa)
+    ZA$Taxa <- relevel(ZA$Taxa, ref="Lactobacillus_reuteri*")
+    ZA$`Delivery status` <- as.factor(ZA$`Delivery status`)
+    ZA$`Delivery status` <- relevel(ZA$`Delivery status`, ref="Term")
+    ZA$Taxa <- sub('_', ' ', ZA$Taxa)
+    ZA$Taxa <- stringr::str_replace(ZA$Taxa, '\\*', '')
+    #ZA$adj.P.Val[c(1)] <- paste(c("p="),ZA$adj.P.Val[c(1)], sep="")
+    ZA$adj.P.Val[c(1)] <- "fdr=0.041"
+    Data_Bac_GAD <- ZA
+    
+    #Plot
+    pd <- position_dodge(0.5)
+    p2 <- ggplot(Data_Bac_GAD, aes(x=Taxa, y=MEAN, colour=`Delivery status`, label=adj.P.Val, fontface = "italic"))
+    DAResultsGAD_Micro <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y =element_text(size=18)) + theme(axis.text.y =element_text(size=16, color="black"), axis.text.x = element_blank()) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=GADcol) + scale_color_manual(values=GADcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(3, 9), breaks = seq(3, 9, by = 3)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none') +   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+DAResultsGAD_Micro
+   
+
+save(Data_Bac_GAD, file="./Data_Figure_3b.RData")
+#load(file="./Data_Figure_3b.RData")
+#Data_Bac_GAD$adj.P.Val[1] <- "fdr=0.041"
+save(DAResultsGAD_Micro, file="DA_GAD_microbiome_plotF3b.Rdata")
+```
+
+##Preeclampsia (PE)
+
+###Description of samples used in this analysis
+
+```{r Imp.formatMyc, echo=FALSE}
+X <- load(file="./MicrobiomeObjects.RData")
+#"Bac_RA"  "Bac"
+
+
+for(i in 1:5){ #Filtering nonT1D women and samples without PE information for unrarefied data
+Bac_RA[[i]] <- phyloseq(otu_table(Bac_RA[[i]], taxa_are_rows = F), sample_data(Bac_RA[[i]]), tax_table(Bac_RA[[i]]), refseq(Bac_RA[[i]]))
+Bac_RA[[i]] <- subset_samples(Bac_RA[[i]], T1Dstatus=="T1D")
+Bac_RA[[i]] <- subset_samples(Bac_RA[[i]], Any.PE!="NA")
+}
+
+for(i in 1:5){ #Filtering nonT1D women and samples without PE information for rarefied data
+Bac[[i]] <- phyloseq(otu_table(Bac[[i]], taxa_are_rows = F), sample_data(Bac[[i]]), tax_table(Bac[[i]]), refseq(Bac[[i]]))
+Bac[[i]] <- subset_samples(Bac[[i]], T1Dstatus=="T1D")
+Bac[[i]] <- subset_samples(Bac[[i]], Any.PE!="NA")
+}
+
+TB <- table(sample_data(Bac_RA[[1]])$Any.PE, sample_data(Bac_RA[[1]])$T1Dstatus)
+```
+
+For analysing the vaginal microbiome of women who had or did not have preeclampsia there are a total of 158 samples for which we have the preeclampsia status. Only samples from women with T1D will be analysed as only women with T1D status had preeclampsia. The samples are distributed as follows:
+
+```{r Count2, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Where:
+
+0: women without preeclampsia and 1: women with preeclampsia.
+
+###Alpha diversity
+
+```{r Alpha2, echo=FALSE}
+OTUVag_RA <- Bac_RA[[1]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+PREcol <- c("cyan4", "deeppink3")
+```
+
+```{r AlphaTest2, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$Any.PE <- as.factor(sample_data(OTUVag_RA)$Any.PE)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$SeqRun <- factor(DivCal_R_df$SeqRun)
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$Any.PE <- factor(DivCal_R_df$Any.PE)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+DivCal_R_df2 <- subset(DivCal_R_df, BMI_Cat != "Underweight")
+DivCal_R_df2$BMI_Cat <- factor(DivCal_R_df2$BMI_Cat, levels=c("Normal", "Overweight", "Obese"))
+
+
+#########################################    Observed Richness
+
+ggplot(DivCal_R_df2, aes(x = Observed)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "Observed", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Observed)
+mean(DivCal_R_df2$Observed)
+var(DivCal_R_df2$Observed)
+
+
+#Test using glmmTMB
+model_tmb <- glmmTMB(Observed ~ Parity*Any.PE + BMI_Cat*Any.PE + (1 | SeqRun), data = DivCal_R_df2, family = nbinom2)  # Negative Binomial model
+model_no_random <- glmmTMB(Observed ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df2, family = nbinom2)
+AIC(model_tmb, model_no_random) #AIC is a bit lower without SeqRun, so we can remove it.
+Anova(model_no_random)
+
+#Response: Observed
+#             Chisq Df Pr(>Chisq)
+#Parity         1.3770  1     0.2406
+#Any.PE         0.1140  1     0.7357
+#BMI_Cat        3.4150  2     0.1813
+#Parity:Any.PE  0.0001  1     0.9937
+#Any.PE:BMI_Cat 2.7574  2     0.2519
+#Since interactions are not significant we remove them
+
+#Since glmmTMB  uses a different optimizer than glmer, which often leads to better convergence in complex models with interactions, we can leave the interaction and test with AIC
+model_no_R <- glmmTMB(Observed ~ Parity * Any.PE + BMI_Cat * Any.PE, data = DivCal_R_df2, family = nbinom2)
+model_no_RInter <- glmmTMB(Observed ~ Parity + BMI_Cat + Any.PE , data = DivCal_R_df2, family = nbinom2)
+AIC(model_no_R, model_no_RInter)
+#                df      AIC
+#model_no_R       9 1128.705
+#model_no_RInter  6 1125.642
+#AIC without the interaction is smaller, so we can keep that model
+sim_res <- simulateResiduals(model_no_RInter)
+plot(sim_res)
+#No deviation or problems detected
+
+ResObs <- Anova(model_no_RInter)
+summary(model_no_RInter)
+exp(confint(model_no_RInter, method = "profile"))
+#Response: Observed
+#         Chisq Df Pr(>Chisq)
+#Parity  0.9489  1     0.3300
+#BMI_Cat 3.1778  2     0.2041
+#Any.PE  0.2000  1     0.6547
+
+#########################################   Chao1
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = Chao1)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Chao1", x = "Chao1", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Chao1)
+mean(DivCal_R_df2$Chao1)
+var(DivCal_R_df2$Chao1)
+skewness(DivCal_R_df2$Chao1)
+Chao1_T1D <- glmmTMB(Chao1 ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|SeqRun), data = DivCal_R_df2, family = gaussian)
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+performance::check_overdispersion(Chao1_T1D_Gamma)
+AIC(Chao1_T1D, Chao1_T1D_Gamma) #Gamma is better
+res <- simulateResiduals(Chao1_T1D_Gamma)
+plot(res)
+Anova(Chao1_T1D_Gamma) #There are no interactions
+
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity + BMI_Cat + Any.PE + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+Anova(Chao1_T1D_Gamma) 
+summary(Chao1_T1D_Gamma)
+#P-GAD = 0.645
+exp(confint(Chao1_T1D_Gamma, method = "profile"))
+
+###################################################   InvSimpson
+
+#InvSimpson is continuous data and we can still use glmmTMB
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = InvSimpson)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "InvSimpson", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$InvSimpson)
+#Data is not normaly distributed so we don't use Gaussian
+#Log transformed data  does not distribute normaly so we should not use Log-normal (Gaussian with log response).
+#Data has NO 0's so we don't use Tweedie.
+
+model_gamma <- glmmTMB(InvSimpson ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log"))
+model_gamma_no_R <- glmmTMB(InvSimpson ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma, model_gamma_no_R)
+#                 df      AIC
+#model_gamma      10 398.7836
+#model_gamma_no_R  9 396.7836
+model_gamma_no_RInter <- glmmTMB(InvSimpson ~ Parity*Any.PE + BMI_Cat, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_R, model_gamma_no_RInter) 
+#                      df      AIC
+#model_gamma_no_R       9 396.7836
+#model_gamma_no_RInter  7 401.7014
+#Stay with interaction with BMI
+
+model_gamma_no_RInter2 <- glmmTMB(InvSimpson ~ Parity + BMI_Cat*Any.PE, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_R, model_gamma_no_RInter2)
+
+model_gamma_no_RInter3 <- glmmTMB(InvSimpson ~ BMI_Cat*Any.PE, data = DivCal_R_df2, family = Gamma(link = "log"))
+AIC(model_gamma_no_RInter2, model_gamma_no_RInter3)
+#                       df     AIC
+#model_gamma_no_RInter2  8 398.8971
+#model_gamma_no_RInter3  7 397.2764
+
+#model without parity is better
+
+sim_res <- simulateResiduals(model_gamma_no_RInter3)
+plot(sim_res)
+
+#Since in the model without random effects but with the interaction between BMI and Any.PE the AIC is smaller, we stay with that. 
+Anova(model_gamma_no_RInter3)
+#Interaction = 0.002884 **
+#Conduct Post-hoc Comparisons, using pairwise comparisons to understand differences
+ResEMPairwise <- emmeans(model_gamma_no_RInter3, pairwise ~ Any.PE | BMI_Cat)
+
+#       0 (no PE) - 1 (PE)
+#   Normal P= 0.0082
+#   Overweight P= 0.0467
+#   Obese   P= 0.1708
+#See asymp.LCL and UCL in table with full details
+# Compute 95% CI in log scale (Normal weight)
+estimate <- -0.624 
+lower_log <- estimate - 1.96 * 0.236 
+upper_log <- estimate + 1.96 * 0.236 
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+# Compute 95% CI in log scale (Overweight)
+estimate <- -0.368 
+lower_log <- estimate - 1.96 * 0.185
+upper_log <- estimate + 1.96 * 0.185
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+# Compute 95% CI in log scale (Obese)
+estimate <- 0.228 
+lower_log <- estimate - 1.96 * 0.167
+upper_log <- estimate + 1.96 * 0.167
+# Convert back to original scale (exponentiate)
+lower_original <- exp(lower_log)
+upper_original <- exp(upper_log)
+estimate_original <- exp(estimate)
+c(Estimate = estimate_original, Lower_CI = lower_original, Upper_CI = upper_original)
+
+
+#PLOT
+
+emm <- emmeans(model_gamma_no_RInter3, ~ BMI_Cat * Any.PE, type = "response") ## --> This extracts the estimated marginal means (EMMs) of the response variable on the original scale (because of type = "response"). Since your model has a log link, emmeans() automatically applies the inverse transformation (exp()) to return predictions on the InvSimpson scale.
+emm_df <- as.data.frame(emm)
+Data_Alpha_BMI_PE <- emm_df
+save(Data_Alpha_BMI_PE, file="./Data_Alpha_PE_Micro_4a.RData")
+load(file="./Data_Alpha_PE_Micro_4a.RData")
+Alpha_BMI_PE <- ggplot(Data_Alpha_BMI_PE, aes(x = BMI_Cat, y = response, color = Any.PE, group = Any.PE)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.2, size=1.5,  position = position_dodge(width = 0.3)) +
+  geom_point(position = position_dodge(width = 0.3), size=3, shape=21, fill="white")  +
+  labs(y = "Predicted response") +
+  theme_set(theme_bw()) +  annotate("text", label =  paste("p=0.024*"), fontface = "italic", x=0.7, y =3.8, size = 6, colour = "black") +  annotate("text", label =  paste("p=0.071"), fontface = "italic", x=1.8, y =3, size = 6, colour = "black") +  annotate("text", label =  paste("p=0.170"), fontface = "italic", x=2.8, y =2.7, size = 6, colour = "black") + scale_y_continuous(labels = scales::number_format(accuracy = 0.1), limits = c(1, 5), breaks = seq(1, 5, by = 0.5)) + 
+  scale_color_manual(values = c("0" = "cyan4", "1" = "deeppink3"))  +  theme(axis.title.y = element_text(size=18), axis.title.x = element_text(size=16)) + theme(axis.text.y =element_text(size=16, color = "black"), axis.text.x=element_text(size=16, color = "black")) + theme(legend.title = element_text(size=16), legend.text = element_text(size=14)) +   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(legend.position='none') + theme(axis.title.x = element_blank())
+Alpha_BMI_PE
+
+
+save(Alpha_BMI_PE, file="./Alpha_PE_Micro_Plot4a.RData")
+load(file="./Alpha_PE_Micro_Plot4a.RData")
+
+############################################      Shannon
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = Shannon)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Shannon", x = "Shannon", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Shannon)
+mean(DivCal_R_df2$Shannon)
+var(DivCal_R_df2$Shannon)
+#glmmTMB #continuous
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon ~ Parity*Any.PE + BMI_Cat*Any.PE + (1|SeqRun), data = DivCal_R_df2, family = Gamma(link = "log")) #Since data has no zeroes,  a + 0.001 or tweedie is not needed.
+performance::check_overdispersion(Shannon_T1D_Gamma2)
+res <- simulateResiduals(Shannon_T1D_Gamma2)
+plot(res)
+
+Anova(Shannon_T1D_Gamma2) # No significant interactions
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon ~ Parity + BMI_Cat + Any.PE + (1|SeqRun), data = DivCal_R_df2, family = tweedie(link = "log"))
+Anova(Shannon_T1D_Gamma2) 
+summary(Shannon_T1D_Gamma2)
+#P-T1D = 0.2424
+exp(confint(Shannon_T1D_Gamma2, method = "profile"))
+
+#ADJUSTMENTS FOR MULTIPLE TESTING OF ALPHA DIVERSITY METRICS (these were applied across all metrics)
+###@@@@@@@@@@@@@@@@@@ BACTERIA
+p_adjBacPE <- p.adjust(c(0.65, 0.65, 0.24), method = "BH", n=3)  # these were applied for metrics richness, Chao1 and Shannon
+p_adjBacPEBMI <- p.adjust(c(0.008, 0.047, 0.17), method = "BH", n=3) ## These were applied within BMI categories fro InvSimpson
+```
+
+###Beta diversity
+
+```{r BetaTest2, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+OTU_Plot <- transform_sample_counts(Bac_RA[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, Any.PE!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot2, HLA!="NA")
+
+D <- distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$BMI <- as.numeric(Meta_df$BMI)
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+Meta_df$motherid <- as.factor(Meta_df$motherid)
+Meta_df$HLA <- as.factor(Meta_df$HLA)
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$SeqRun <- as.factor(Meta_df2$SeqRun)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$Any.PE <- as.factor(Meta_df2$Any.PE)
+Meta_df2$motherid <- as.factor(Meta_df2$motherid)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+Meta_df2$HLA <- as.factor(Meta_df2$HLA)
+
+#testing interaction between parity and BMI with Preeclampsia --> They were not significant
+AdonisR <- adonis2(D2 ~  SeqRun +  Parity*Any.PE + BMI_Cat*Any.PE, strata=Meta_df2$motherid,  data=Meta_df2)
+  
+AdonisR <- adonis2(D2 ~  SeqRun +  Parity + BMI_Cat  + Any.PE, strata=Meta_df2$motherid,  data=Meta_df2)
+  print(i)
+  print(AdonisR)
+  #print(kable(AdonisR) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+  A2Res <- round(AdonisR$`Pr(>F)`[3], 2)
+  ## 95% CI
+  CI.Rsq(0.00811, n=151, k=4)
+
+}
+
+#For table E4.5 at GENUS, FAMILY and ORDER Pairwise
+  
+  #Factor to do pairwise
+  Meta_df2$PEBMIC <- with(Meta_df2, interaction(Any.PE, BMI_Cat, sep = "x"))
+  BMIPE <- pairwise.adonis2(D2 ~ PEBMIC + SeqRun + Parity, Meta_df2, strata = NULL, nperm = 999)
+  BMIPEN <- BMIPE$`0xNormal_vs_1xNormal`# NormalW PE P=0.305
+  CI.Rsq(0.01737, n=67, k=3) # -0.02128846 0.04372846
+  BMIPEOv <- BMIPE$`0xOverweight_vs_1xOverweight` #OverW PE P=0.081
+  CI.Rsq(0.06199, n=40, k=3) # -0.03415031 0.05913031
+  BMIPEOb <- BMIPE$`0xObese_vs_1xObese` #ObeseW PE P=0.565
+  CI.Rsq(0.01572, n=44, k=3) # -0.03740546 0.07358546
+  
+```
+
+###Differential abundance analysis
+
+```{r DAPEMicro, echo=FALSE}
+for(i in 1:1){
+BacFilt <- Bac[[i]]
+BacFilt <- prune_samples(sample_sums(BacFilt) > 5000, BacFilt)
+BacFilt <- subset_samples(BacFilt, T1Dstatus=="T1D")
+BacFilt <- subset_samples(BacFilt, Any.PE!="NA")
+X <- cut(sample_data(BacFilt)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+  sample_data(BacFilt)$BMI_Cat <- X
+  BacFilt <- subset_samples(BacFilt, BMI_Cat!="NA")
+  BacFilt <- subset_samples(BacFilt, BMI_Cat!="Underweight")
+
+Counts <- as.data.frame(t(otu_table(BacFilt)))
+# Metadata
+Meta_df <- as.data.frame(as.matrix(sample_data(BacFilt)))
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+contrasts(Meta_df$SeqRun) <- contr.sum(levels(Meta_df$SeqRun))
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+contrasts(Meta_df$Parity) <- contr.sum(levels(Meta_df$Parity))
+Meta_df$motherid <- as.factor(as.character(Meta_df$motherid))
+contrasts(Meta_df$motherid) <- contr.sum(levels(Meta_df$motherid))
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+contrasts(Meta_df$Any.PE) <- contr.sum(levels(Meta_df$Any.PE))
+Meta_df$BMI_Cat <- as.factor(Meta_df$BMI_Cat)
+contrasts(Meta_df$BMI_Cat) <- contr.sum(levels(Meta_df$BMI_Cat))
+Meta_df$Any.PE_BMI <- as.factor(paste(Meta_df$Any.PE, Meta_df$BMI_Cat, sep="x"))
+  
+  #Design matrix
+design <- model.matrix(~0 + Any.PE_BMI + Parity + SeqRun, data=Meta_df) 
+
+dge <- DGEList(Counts, group= Meta_df$Any.PE_BMI)
+
+M <- dge$counts
+M[M>0] <-1
+keepP <- rowSums(M) > 85 #85 is based on >50% of the samples (158)
+dge <- dge[keepP,,keep.lib.sizes=FALSE]
+dge <- dge[,which(!dge$samples$lib.size == 0)]
+# Metadata
+dgeN <- colnames(dge$counts)
+vecF <- prune_samples(as.character(dgeN), BacFilt)
+Counts <- as.data.frame(otu_table(vecF))
+Meta_df <- as.data.frame(as.matrix(sample_data(vecF)))
+Meta_df$BMI_Cat <- as.factor(Meta_df$BMI_Cat)
+contrasts(Meta_df$BMI_Cat) <- contr.sum(levels(Meta_df$BMI_Cat))
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+contrasts(Meta_df$Any.PE) <- contr.sum(levels(Meta_df$Any.PE))
+Meta_df$Any.PE_BMI <- as.factor(paste(Meta_df$Any.PE, Meta_df$BMI_Cat, sep="x"))
+design <- model.matrix(~0 + Any.PE_BMI + Parity + SeqRun, data=Meta_df)
+
+dgeTMM <- edgeR::calcNormFactors(dge, method = "TMMwsp")
+fit <- voomLmFit(dgeTMM, design = design , plot = FALSE, block=Meta_df$motherid)
+
+## Contrast preeclampsia_levels 
+cont <- makeContrasts(PE=(Any.PE_BMI0xNormal + Any.PE_BMI0xObese + Any.PE_BMI0xOverweight)/3-(Any.PE_BMI1xNormal + Any.PE_BMI1xObese + Any.PE_BMI1xOverweight)/3, levels=design)
+
+fitc <- contrasts.fit(fit, contrasts = cont)
+fitc <- eBayes(fitc, robust=TRUE)
+DT<- decideTests(fitc)
+print(summary(DT))
+
+TT <- topTable(fitc, coef = "PE", n=Inf, confint=TRUE) #, confint=TRUE is added to obtain confidence intervals for the logFC
+TT2 <- TT[(TT$adj.P.Val<0.1),]
+print(k)
+if(nrow(TT2)>0){
+print(cbind(TT2,(tax_table(BacFilt)[rownames(TT2),Tax[i]])))
+}
+
+TO <- TT2
+TV<- vector()
+Mean <- cbind(data.frame(mean(fit$coef[rownames(TO),c(1:3)])), data.frame(mean(fit$coef[rownames(TO),c(4:6)])))
+colnames(Mean)[1:2] <- c("MEAN:No Preeclampsia", "MEAN:Preeclampsia")
+SE <- fit$stdev.unscaled * sqrt(fitc$s2.post)
+SE <- cbind(data.frame(mean(SE[rownames(TO),c(1:3)])), data.frame(mean(SE[rownames(TO),c(4:6)])))
+colnames(SE)[1:2] <- c("SE:No Preeclampsia", "SE:Preeclampsia")
+Results <- cbind(TT2[c(1:nrow(TO)),c(1,6:7)], Mean, SE)
+print(Results)
+MeanSE <- Results
+
+rownames(MeanSE) <- tax_table(BacFilt)[rownames(TT2),Tax[i]]
+MeanSE$Taxa <- rownames(MeanSE)
+X <- melt(MeanSE[,3:8], "Taxa")
+Y <- data.frame(str_split_fixed(X$variable, ":", 2))
+Z <- cbind(X[1], Y, X[3])
+Z$X2[1:length(MeanSE$adj.P.Val)] <- rep("Preeclampsia", length(MeanSE$adj.P.Val))
+Z2 <- dcast(Z, Taxa + X2 ~ X1)
+Z2$adj.P.Val <- round(Z2$adj.P.Val, 4)
+colnames(Z2)[2] <- "Preeclampsia status"
+
+
+ZA <- Z2
+ZA$Taxa <- as.factor(ZA$Taxa)
+ZA$Taxa <- sub('_', ' ', ZA$Taxa)
+ZA$adj.P.Val[c(2)] <- paste(c("p="),ZA$adj.P.Val[c(2)], sep="")
+DA_Microbiome_PE <- ZA
+DA_Microbiome_PE$adj.P.Val[2] <- "fdr=0.012"
+save(DA_Microbiome_PE, file="./Data_Figure_4b.RData")
+#load(file="./Data_Figure_4b.RData")
+
+#DA_Microbiome_PE$adj.P.Val[2] <- "p=0.0005"
+
+p2 <- ggplot(DA_Microbiome_PE, aes(x=Taxa, y=MEAN, colour=`Preeclampsia status`, label=adj.P.Val, fontface = "italic"))
+pd <- position_dodge(0.5)
+DAMicroPE <-  p2 + geom_errorbar(aes(ymin=MEAN-SE, ymax=MEAN+SE), size=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16, color = "black"), axis.text.x = element_blank()) + theme(legend.title = element_text(size=13, face="bold")) + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol)  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(6, 18), breaks = seq(6, 18, by = 2)) + geom_text(angle = 0, vjust=1, hjust=1, color="black", size=6) + ylab("log2-transformed fitted values") + theme(legend.position='none') +   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+DAMicroPE
+save(DAMicroPE, file="DA_PE_Microbiome_Plot4b.RData")
+#load(file="DA_PE_Microbiome_Plot4b.RData")
+```
+
+#Vaginal mycobiome
+
+##Premature delivery (PD)
+
+###Description of samples used in this analysis
+
+```{r vecPD, echo=FALSE, fig.height=12, fig.width=16}
+load(file="./mycobiomeObjects.RData")
+#Myco, Myco_RA5000
+
+for(i in 1:6){ ##defining term and premature categorical factors based on Gestational age at delivery in weeks and filter samples from women who delivered by elective caesarean for unrarefied data
+Myco[[i]] <- subset_samples(Myco[[i]], GA_at_Delivery_w!="NA")
+X <- cut(sample_data(Myco[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Myco[[i]])$GAD <- X
+  sample_data(Myco[[i]])$GAD <- as.factor(sample_data(Myco[[i]])$GAD)
+  sample_data(Myco[[i]])$GAD_MOD <- paste(sample_data(Myco[[i]])$GAD, sample_data(Myco[[i]])$MOD, sep=".")
+  Myco[[i]] <- prune_samples(sample_sums(Myco[[i]]) > 5000, Myco[[i]])
+  Myco[[i]] <- prune_taxa(taxa_sums(Myco[[i]]) > 30, Myco[[i]])
+  Myco[[i]] <- subset_samples(Myco[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Myco[[i]] <- subset_samples(Myco[[i]], T1Dstatus=="T1D")
+}
+
+
+for(i in 1:6){#defining term and premature categorical factors based on Gestational age at delivery in weeks and filter samples from women who delivered by elective caesarean for rarefied data
+Myco_RA5000[[i]] <- subset_samples(Myco_RA5000[[i]], GA_at_Delivery_w!="NA")
+X <- cut(sample_data(Myco_RA5000[[i]])$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+  sample_data(Myco_RA5000[[i]])$GAD <- X
+  sample_data(Myco_RA5000[[i]])$GAD <- as.factor(sample_data(Myco_RA5000[[i]])$GAD)
+  sample_data(Myco_RA5000[[i]])$GAD_MOD <- paste(sample_data(Myco_RA5000[[i]])$GAD, sample_data(Myco_RA5000[[i]])$MOD, sep=".")
+  Myco_RA5000[[i]] <- prune_taxa(taxa_sums(Myco_RA5000[[i]]) > 30, Myco_RA5000[[i]])
+  Myco_RA5000[[i]] <- subset_samples(Myco_RA5000[[i]], GAD_MOD!="Premature.Caesarean (elective)")
+  Myco_RA5000[[i]] <- subset_samples(Myco_RA5000[[i]], T1Dstatus=="T1D")
+
+}
+
+TB <- table(sample_data(Myco_RA5000[[2]])$T1Dstatus, sample_data(Myco_RA5000[[2]])$GAD)
+```
+
+For analysing the vaginal microbiome of women who had premature deliveries vs. women who had term deliveries, only women with T1D were analysed because the number of women without T1D who had premature deliveries was small (n=2) there are a total of 62 samples distributed as follows:
+
+```{r Count5PDmy, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+###Alpha diversity
+
+```{r AlphaPDmy, echo=FALSE}
+OTUVag_RA <- Myco_RA5000[[2]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+GADcol <- c("darkgreen", "darkorange")
+```
+
+Green: Premature [<37 weeks]; Orange: Term [37-40 weeks]
+
+```{r AlphaTestPDmy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+Dummy <- OTUVag_RA
+sample_data(Dummy)$GAD <- as.factor(sample_data(Dummy)$GAD)
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$GAD <- factor(DivCal_R_df$GAD)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+##################################################    Observed richness
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Observed)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "Observed", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Observed)
+mean(DivCal_R_df$Observed)
+var(DivCal_R_df$Observed)
+
+DivCal_R_df2 <- subset(DivCal_R_df, BMI_Cat != "Underweight")
+DivCal_R_df2$BMI_Cat <- factor(DivCal_R_df2$BMI_Cat, levels=c("Normal", "Overweight", "Obese"))
+Obs_GAD <- glmmTMB(Observed ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df2, family = nbinom2)
+
+#Interactions were not significant, so we removed them from the model
+Obs_GAD <- glmmTMB(Observed ~ Parity + BMI_Cat + GAD, data = DivCal_R_df2, family = nbinom2)
+
+ResObs <- Anova(Obs_GAD)
+summary(Obs_GAD)
+exp(confint(Obs_GAD, method = "profile"))
+
+#No significant differences in richness were observed due to premature delivery
+
+##################################################   Chao1
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Chao1)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Chao1", x = "Chao1", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Chao1)
+mean(DivCal_R_df$Chao1)
+var(DivCal_R_df$Chao1)
+skewness(DivCal_R_df$Chao1)
+Chao1_T1D <- glmmTMB(Chao1 ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df, family = gaussian)
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df, family = Gamma(link = "log"))
+performance::check_overdispersion(Chao1_T1D_Gamma)
+AIC(Chao1_T1D, Chao1_T1D_Gamma) #Gamma is better
+res <- simulateResiduals(Chao1_T1D_Gamma)
+plot(res)
+Anova(Chao1_T1D_Gamma) #There are no interactions
+
+Chao1_T1D_Gamma <- glmmTMB(Chao1 ~ Parity + BMI_Cat + GAD, data = DivCal_R_df, family = Gamma(link = "log"))
+Anova(Chao1_T1D_Gamma) 
+summary(Chao1_T1D_Gamma)
+#P-GAD = 0.27
+exp(confint(Chao1_T1D_Gamma, method = "profile"))
+
+#No significant differences detected
+
+##################################################     InvSimpson
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = InvSimpson)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of InvSimpson", x = "InvSimpson", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$InvSimpson)
+mean(DivCal_R_df2$InvSimpson)
+var(DivCal_R_df2$InvSimpson)
+
+#Testing differences in InvSimpson due to T1D status alone
+InvS_T1D <- glmmTMB(InvSimpson ~ BMI_Cat*GAD + Parity*GAD, data = DivCal_R_df2, family = Gamma(link = "log"))
+#Interactions were not significantly different and therefore were removed
+InvS_T1D <- glmmTMB(InvSimpson ~ BMI_Cat + Parity + GAD, data = DivCal_R_df2, family = Gamma(link = "log"))
+
+ResObs3 <- Anova(InvS_T1D)
+summary(InvS_T1D)
+exp(confint(InvS_T1D, method = "profile"))
+
+ #No significant differences detected
+
+####################################################   Shannon
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Shannon)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Shannon", x = "Shannon", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Shannon)
+mean(DivCal_R_df$Shannon)
+var(DivCal_R_df$Shannon)
+#glmmTMB #continuous
+DivCal_R_df$Shannon2 <- DivCal_R_df$Shannon + 0.001
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon2 ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df, family = Gamma(link = "log"))
+Shannon_T1D_Tweedie <- glmmTMB(Shannon2 ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df, family = tweedie(link = "log"))
+AIC(Shannon_T1D_Gamma2, Shannon_T1D_Tweedie)
+performance::check_overdispersion(Shannon_T1D_Gamma2)
+res <- simulateResiduals(Shannon_T1D_Tweedie)
+plot(res)
+
+#If Shannon is between 0 and 4, use Beta regression: It is
+DivCal_R_df$Shannon_scaled <- (DivCal_R_df$Shannon + 0.001) / (max(DivCal_R_df$Shannon) + 0.002)
+model_beta <- glmmTMB(Shannon_scaled ~ Parity*GAD + BMI_Cat*GAD, data = DivCal_R_df, family = beta_family(link = "logit"))
+res <- simulateResiduals(model_beta)
+plot(res)
+
+Anova(model_beta) # No significant interactions
+model_beta <- glmmTMB(Shannon_scaled ~ Parity + BMI_Cat + GAD , data = DivCal_R_df, family = beta_family(link = "logit"))
+Anova(model_beta) 
+summary(model_beta)
+#P-T1D = 0.5593
+exp(confint(model_beta, method = "profile"))
+
+#No significant differences detected
+
+#ADJUSTMENTS FOR MULTIPLE TESTING OF ALPHA DIVERSITY METRICS (these were applied across all metrics)
+###@@@@@@@@@@@@@@@@@@ FUNGI
+p_adjFunGAD <- p.adjust(c(0.21, 0.28, 0.22, 0.56), method = "BH", n=4)
+```
+
+###Beta diversity
+
+Interactions with parity and BMI were tested.
+
+```{r BetaTest5PDmy, echo=FALSE, fig.height=10, fig.width=10, results='asis'}
+Tax <- c("Species", "Genus", "Family", "Order", "Phylum")
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+cat('\n')
+#cat('\n###', Tax[i], "taxonomic level", '\n')
+cat('\n')
+OTU_Plot <- transform_sample_counts(Myco_RA5000[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+X <- cut(sample_data(OTU_Plot)$GA_at_Delivery_w, breaks = c(-Inf,36.9,Inf), labels = c("Premature","Term"))
+sample_data(OTU_Plot)$GAD <- X
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D2 <- phyloseq::distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta2_df <- as.data.frame(Meta2)
+Meta2_df$Parity <- as.factor(Meta2_df$Parity)
+Meta2_df$GAD <- as.factor(Meta2_df$GAD)
+Meta2_df$BMI <- as.numeric(Meta2_df$BMI)
+
+#AdonisR <- adonis2(D2 ~  Parity*GAD + GAD*BMI, data=Meta2_df) # Interaction not significant
+AdonisR <- adonis2(D2 ~  Parity + BMI + GAD, data=Meta2_df)
+
+## 95% CI
+CI.Rsq(0.01418 , n=58, k=3)
+}
+```
+
+###Differential abundance analysis
+
+```{r DAPDvec, echo=FALSE, fig.height=12, fig.width=16}
+#for(i in 1:5){  #Si queremos algo aunque no haga tanto sentido i=5, k=2 modelo simple. With complete model we got the same combination but results are better quality. 
+  for(i in 2:6){
+BacFilt <- Myco[[i]]
+BacFilt <- prune_taxa(taxa_sums(BacFilt) > 0, BacFilt)
+
+X <- cut(sample_data(BacFilt)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+  sample_data(BacFilt)$BMI_Cat <- X
+  BacFilt <- subset_samples(BacFilt, BMI_Cat!="NA")
+  BacFilt <- subset_samples(BacFilt, BMI_Cat!="Underweight")
+  
+  if(i==2){
+  SpeciesGAD <- t(data.frame(otu_table(BacFilt)[c("44861a14bec90866988ae47164f51a7d", "2d2f01df039d1dd679fc98100290792f", "631d7fe330839888af3c1f53f85f7991"),], check.names = F))  #Genus level for extra analysis
+  Data <- sample_data(BacFilt)[,c("GAD", "BMI_Cat", "Parity")]
+  SS_SpeciesGAD<- sample_sums(BacFilt)
+  Species_DatGAD <- cbind(SpeciesGAD, Data)
+  }
+  
+  if(i==3){
+  GenusGAD <- t(data.frame(otu_table(BacFilt)[c("g__Malassezia", "g__Candida"),], check.names = F))  #Genus level for extra analysis
+  DataGAD <- sample_data(BacFilt)[,c("GAD", "BMI_Cat", "Parity")]
+  SS_GenusGAD <- sample_sums(BacFilt)
+  Genus_DatGAD <- cbind(GenusGAD, DataGAD)
+  }
+  
+  if(i==4){
+  FamilyGAD <- t(data.frame(otu_table(BacFilt)[c("f__Malasseziaceae", "f__Saccharomycetaceae", "f__Peniophoraceae"),], check.names = F))  #Family level for extra analysis
+  SS_FamilyGAD <- sample_sums(BacFilt)
+  GF_DFGAD <- cbind(Genus_DatGAD, FamilyGAD, SS_FamilyGAD)
+  }
+  
+  if(i==5){
+  Order <- t(data.frame(otu_table(BacFilt)[c("o__Russulales", "o__Polyporales", "o__Malasseziales", "o__Saccharomycetales"),], check.names = F))  #Family level for extra analysis
+  GF_DFGAD <- cbind(GF_DFGAD, Order)
+  }
+  
+  if(i==6){
+  Phylum <- t(data.frame(otu_table(BacFilt)[c("p__Basidiomycota", "p__Ascomycota"),], check.names = F))  #Family level for extra analysis
+  GF_DFGAD <- cbind(GF_DFGAD, Phylum)
+  }
+} 
+#Species_DatGAD contains data abundances at species levels 
+#GF_DFGAD contains data abundances at genus, family, order and phylum levels
+  
+#GLMMs which Handle Unequal Sequencing Depths Naturally. glmmTMB models, especially negative binomial (nbinom1 or nbinom2), account for overdispersion and can incorporate sequencing depth as an offset [library size (total read count per sample)]. offset(log(library_size)) ensures that differences in sequencing depth are accounted for without discarding data.
+#If zero inflation is an issue, glmmTMB also allows zero-inflated models (family = znbinom2 or znbinom1).
+#Model Diagnostics:
+#Check for overdispersion using performance::check_overdispersion(model).
+#Assess zero inflation using performance::check_zeroinflation(model).
+#Visualize residuals using DHARMa::simulateResiduals(model).
+
+#Species
+
+#Species (Species_DatGAD)
+Species_DatGAD$T1Dstatus <- factor(Species_DatGAD$T1Dstatus)
+Species_DatGAD$BMI_Cat <- factor(Species_DatGAD$BMI_Cat)
+Species_DatGAD$Parity <- factor(Species_DatGAD$Parity)
+
+#1) s__Malassezia_restricta --> 2d2f01df039d1dd679fc98100290792f
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = Species_DatGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ Parity + BMI_Cat + GAD, data = Species_DatGAD, family = nbinom2)
+nb_model3 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ BMI_Cat + GAD, data = Species_DatGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No overdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) 
+#           Chisq Df Pr(>Chisq)  
+#BMI_Cat 0.9663  2    0.61684  
+#GAD     2.8258  1    0.09276 .
+summary(nb_model3) #Est = -2.0270
+confint(nb_model3, method = "profile")
+#-4.892720  0.1432561
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- Species_DatGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(`2d2f01df039d1dd679fc98100290792f`, na.rm = TRUE),
+            SE = sd(`2d2f01df039d1dd679fc98100290792f`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#2) s__Candida_albicans --> 631d7fe330839888af3c1f53f85f7991
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(`631d7fe330839888af3c1f53f85f7991` ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = Species_DatGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(`631d7fe330839888af3c1f53f85f7991` ~ Parity + BMI_Cat + GAD, zi = ~ 1, data = Species_DatGAD, family = truncated_nbinom2)
+nb_model3 <- glmmTMB(`631d7fe330839888af3c1f53f85f7991` ~ BMI_Cat +GAD, zi = ~ BMI_Cat, data = Species_DatGAD, family = nbinom1) ##THIS HAS NO DEVIATIONS, TRY WITH T1DSTATUS TESTS
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) 
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 7.0154  2    0.02997 *
+#GAD     1.3103  1    0.25233  
+summary(nb_model3)
+#Estimate = 0.08633
+confint(nb_model3, method = "profile")
+#-0.9786199  0.33938326
+
+summary_df <- Species_DatGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(`631d7fe330839888af3c1f53f85f7991`, na.rm = TRUE),
+            SE = sd(`631d7fe330839888af3c1f53f85f7991`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#Genus and family tax levels GF_DF
+
+# 1) Genus Malassezia
+
+nb_model2 <- glmmTMB(g__Malassezia ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2) #No significant interactions with BMI
+nb_model2 <- glmmTMB(g__Malassezia ~ Parity + BMI_Cat + GAD, zi = ~ GAD, data = GF_DFGAD, family = nbinom2)
+res <- simulateResiduals(nb_model2) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model2) #No overdisperssion
+performance::check_zeroinflation(nb_model2) #Zeroes within the tolerance (term zi = ~ GAD added due to many zeroes)
+Anova(nb_model2) # Significant differences detected due to GAD status
+#         Chisq Df Pr(>Chisq)
+#Parity  0.0281  1    0.86689  
+#BMI_Cat 3.2620  2    0.19573  
+#GAD     5.4289  1    0.01981 *
+
+summary(nb_model2)
+
+#                  Estimate Std. Error z value Pr(>|z|)    
+##(Intercept)         9.3993     1.1457   8.204 2.32e-16 ***
+#Parity              0.1315     0.7844   0.168   0.8669    
+#BMI_CatOverweight  -0.9543     1.2361  -0.772   0.4401    
+#BMI_CatObese        0.7928     0.8100   0.979   0.3277    
+#GADTerm            -1.9862     0.8524  -2.330   0.0198 *
+
+confint(nb_model2, method = "profile")
+#                        2.5 %       97.5 %
+#GADTerm           -3.8899222     -0.3781072
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(g__Malassezia, na.rm = TRUE),
+            SE = sd(g__Malassezia, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+#      GAD      Mean    SE
+# Premature     10205. 6038.
+#      Term     1363.  593.
+
+#FOR PLOT
+
+SN <- "Genus: Malassezia"
+summary_df2 <- data.frame(summary_df)
+summary_df2$Taxa <- c(SN, SN)
+summary_df2$Pvalue <- c(NA, "p=0.019")
+summary_df2$Mean <- round(summary_df2$Mean, 0)
+summary_df2$SE <- round(summary_df2$SE, 0)
+Summary_GAD_G <- summary_df2
+
+# Boxplot with Jitter and Mean ± SE
+ggplot(GF_DFGAD, aes(x = GAD, y = GF_DFGAD$g__Malassezia, fill = GAD)) +
+  geom_boxplot(alpha = 0.5, outlier.shape = NA) +  # Boxplot without outliers
+  geom_jitter(aes(color = GAD), width = 0.2, alpha = 0.5) +  # Jitter for points
+  geom_errorbar(data = summary_df, aes(x = GAD, ymin = Mean - SE, ymax = Mean + SE), width = 0.2, size = 1) +  # Error bars
+  geom_point(data = summary_df, aes(x = GAD, y = Mean), shape = 23, size = 4, fill = "black") +  # Mean points
+  theme_minimal() +
+  labs(title = "g__Malassezia Abundance by T1D Status",
+       x = "T1D Status", y = "g__Malassezia Abundance") +
+  scale_fill_brewer(palette = "GADcol") +
+  scale_color_brewer(palette = "GADcol")
+
+# 2) Genus Candida
+nb_model2 <- glmmTMB(`g__Candida` ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(`g__Candida` ~ Parity + BMI_Cat + GAD, zi = ~ 1, data = GF_DFGAD, family = truncated_nbinom2)
+nb_model3 <- glmmTMB(`g__Candida` ~ BMI_Cat +GAD, zi = ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom1) ##THIS HAS NO DEVIATIONS, TRY WITH T1DSTATUS TESTS
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance (term zi = ~ GAD added due to many zeroes)
+
+Anova(nb_model3) # Significant differences detected due to GAD status
+#         Chisq Df Pr(>Chisq)
+#BMI_Cat 5.2512  2    0.07240 .
+#GAD     3.1773  1    0.07467 .
+
+summary(nb_model3) # Est = -0.5386
+confint(nb_model3, method = "profile")
+#-1.113242e+00  0.10632618
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(g__Candida, na.rm = TRUE),
+            SE = sd(g__Candida, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+# 3) Family Malasseziaceae (is exactly the same as the Malassezia genus)
+
+#FOR PLOT
+
+SN <- "Family: Malasseziaceae"
+summary_df2 <- data.frame(summary_df)
+summary_df2$Taxa <- c(SN, SN)
+summary_df2$Pvalue <- c(NA, "p=0.019")
+summary_df2$Mean <- round(summary_df2$Mean, 0)
+summary_df2$SE <- round(summary_df2$SE, 0)
+Summary_GAD_F <- summary_df2
+
+# 4) Family Saccharomycetaceae
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(f__Saccharomycetaceae ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2) #No significant interaction
+nb_model2 <- glmmTMB(f__Saccharomycetaceae ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(f__Saccharomycetaceae ~ BMI_Cat + GAD, zi= ~ 1, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+performance::check_overdispersion(nb_model3) #No overdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+res <- simulateResiduals(nb_model3) # No significant deviations detected
+plot(res)
+Anova(nb_model3) #No significant differences detected due to GAD status
+#         Chisq Df Pr(>Chisq)
+#BMI_Cat 3.6824  2     0.1586
+#GAD     0.0016  1     0.9679
+
+summary(nb_model3) # Est = 0.04348
+confint(nb_model3, method = "profile")
+#-2.83095766 2.307968
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(f__Saccharomycetaceae, na.rm = TRUE),
+            SE = sd(f__Saccharomycetaceae, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+# 5) Family Peniophoraceae
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(f__Peniophoraceae ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2) #No significant interaction
+nb_model2 <- glmmTMB(f__Peniophoraceae ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(f__Peniophoraceae ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to PE status
+#         Chisq Df Pr(>Chisq)
+#BMI_Cat 2.3893  2     0.3028
+#GAD     0.1004  1     0.7513
+summary(nb_model3) # Est = 0.5332
+confint(nb_model3, method = "profile")
+#-3.964691  4.151832
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(f__Peniophoraceae, na.rm = TRUE),
+            SE = sd(f__Peniophoraceae, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#6) Order Russulales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Russulales ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Russulales ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(o__Russulales ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 2.3893  2     0.3028
+#GAD     0.1004  1     0.7513
+summary(nb_model3)
+#Estimate = 0.5332  
+confint(nb_model3, method = "profile")
+#-3.964691  4.151832
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(o__Russulales, na.rm = TRUE),
+            SE = sd(o__Russulales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#7) Order Polyporales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Polyporales ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Polyporales ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(o__Polyporales ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 1.4675  2     0.4801
+#GAD     0.2424  1     0.6225
+summary(nb_model3)
+#Estimate = 1.1436 
+confint(nb_model3, method = "profile")
+#-4.226989  4.649006
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(o__Polyporales, na.rm = TRUE),
+            SE = sd(o__Polyporales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#8) Order Malasseziales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Malasseziales ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Malasseziales ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(o__Malasseziales ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 2.4038  2    0.30063  
+#GAD     4.0885  1    0.04318 *
+summary(nb_model3)
+#Estimate = -2.4006
+confint(nb_model3, method = "profile")
+#-5.118867 -0.1922439
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(o__Malasseziales, na.rm = TRUE),
+            SE = sd(o__Malasseziales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#FOR PLOT 
+
+SN <- "Order: Malasseziales"
+summary_df2 <- data.frame(summary_df)
+summary_df2$Taxa <- c(SN, SN)
+summary_df2$Pvalue <- c(NA, "p=0.043*")
+summary_df2$Mean <- round(summary_df2$Mean, 0)
+summary_df2$SE <- round(summary_df2$SE, 0)
+Summary_GAD_O <- summary_df2
+
+Summary_GAD_F3C <- rbind(Summary_GAD_G, Summary_GAD_F, Summary_GAD_O)
+Summary_GAD_F3C$Pvalue[1] <- "p=0.019"
+Summary_GAD_F3C$Pvalue[2] <- NA
+Summary_GAD_F3C$Pvalue[3] <- "p=0.019"
+Summary_GAD_F3C$Pvalue[4] <- NA
+Summary_GAD_F3C$Pvalue[5] <- "p=0.043"
+Summary_GAD_F3C$Pvalue[6] <- NA
+
+Summary_GAD_F3C$GAD <- relevel(Summary_GAD_F3C$GAD, ref = "Term")
+Summary_GAD_F3C$Taxa <- factor(Summary_GAD_F3C$Taxa)
+Summary_GAD_F3C$Taxa <- relevel(Summary_GAD_F3C$Taxa, ref = "Genus: Malassezia")
+
+save(Summary_GAD_F3C, file="./Data_Figure_3c.RData")
+#load(file="./Data_Figure_3c.RData")
+
+p3T <- ggplot(Summary_GAD_F3C, aes(x=Taxa, y=Mean, colour=GAD, label=Pvalue, fontface = "italic"))
+DAFungiGAD3T <-  p3T + geom_errorbar(aes(ymin=Mean-SE, ymax=Mean+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank(), axis.text.x = element_text(angle = 0, hjust=0.5, size=17, color="black")) + theme(axis.title.y = element_text(size=18, color="black")) + theme(axis.text.y =element_text(size=16, color="black")) + theme(legend.title = element_text(size=13, face="bold"))  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(400, 16400), breaks = seq(400, 16400, by = 4000)) + geom_text(angle = 0, hjust=1, vjust=-5, color="black", size=6, check_overlap = TRUE) + ylab("Raw abundances") + scale_fill_manual(values=GADcol) + theme(legend.position='none') + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_color_manual(values=GADcol) 
+DAFungiGAD3T
+save(DAFungiGAD3T, file="./DA_GAD_Fungi_Plot3c.RData")
+#load(file="./DA_GAD_Fungi_Plot3c.RData")
+
+#9) Order Saccharomycetales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Saccharomycetales ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Saccharomycetales ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(o__Saccharomycetales ~ BMI_Cat + GAD, zi = ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 0.0191  2     0.9905
+#GAD     0.2761  1     0.5993
+summary(nb_model3)
+#Estimate = 0.21425 
+confint(nb_model3, method = "profile")
+#-0.6461747   0.9938940
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(o__Saccharomycetales, na.rm = TRUE),
+            SE = sd(o__Saccharomycetales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#10) Phylum Basidiomycota
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(p__Basidiomycota ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(p__Basidiomycota ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(p__Basidiomycota ~ BMI_Cat + GAD,  zi = ~ BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 1.3165  2     0.5177
+#GAD     1.3012  1     0.2540
+summary(nb_model3)
+#Estimate = -0.3825 
+confint(nb_model3, method = "profile")
+# -1.9654364  0.4475602
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(p__Basidiomycota, na.rm = TRUE),
+            SE = sd(p__Basidiomycota, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#11) Phylum Ascomycota
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(p__Ascomycota ~ GAD + BMI_Cat + Parity + GAD:BMI_Cat, data = GF_DFGAD, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(p__Ascomycota ~ Parity + BMI_Cat + GAD, data = GF_DFGAD, family = nbinom2)
+nb_model3 <- glmmTMB(p__Ascomycota ~ BMI_Cat + GAD, zi = ~  BMI_Cat:GAD, data = GF_DFGAD, family = nbinom1)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 4.0201  2     0.1340
+#GAD     0.2291  1     0.6322
+summary(nb_model3)
+#Estimate = -0.1115 
+confint(nb_model3, method = "profile")
+#-0.5500291  3.760631e-01
+
+summary_df <- GF_DFGAD %>%
+  group_by(GAD) %>%
+  summarise(Mean = mean(p__Ascomycota, na.rm = TRUE),
+            SE = sd(p__Ascomycota, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+```
+
+
+##Preeclampsia (PE)
+
+###Description of samples used in this analysis
+
+```{r vecPE, echo=FALSE, fig.height=12, fig.width=16}
+load(file="./mycobiomeObjects.RData")
+
+for(i in 1:6){ #Staying with samples from women with T1D and removing samples for which we don't have PE information unrerafied data
+Myco[[i]] <- phyloseq(otu_table(Myco[[i]], taxa_are_rows = F), sample_data(Myco[[i]]), tax_table(Myco[[i]]), phy_tree(Myco[[i]]))
+Myco[[i]] <- subset_samples(Myco[[i]], T1Dstatus=="T1D")
+Myco[[i]] <- subset_samples(Myco[[i]], Any.PE!="NA")
+
+}
+for(i in 1:6){#Staying with samples from women with T1D and removing samples for which we don't have PE information, rarefied data
+Myco_RA5000[[i]] <- phyloseq(otu_table(Myco_RA5000[[i]], taxa_are_rows = F), sample_data(Myco_RA5000[[i]]), tax_table(Myco_RA5000[[i]]), phy_tree(Myco_RA5000[[i]]))
+Myco_RA5000[[i]] <- subset_samples(Myco_RA5000[[i]], T1Dstatus=="T1D")
+Myco_RA5000[[i]] <- subset_samples(Myco_RA5000[[i]], Any.PE!="NA")
+
+}
+
+TB <- table(sample_data(Myco_RA5000[[2]])$Any.PE)
+```
+
+For analysing the vaginal microbiome of women who had or did not have preeclampsia there are a total of 68 samples for which we have the preeclampsia status. Only samples from women with T1D will be analysed as only women with T1D status had preeclampsia. The samples are distributed as follows:
+
+```{r Count6, echo=FALSE, results='asis'}
+print(kable(TB) %>% kable_styling(bootstrap_options = "striped", full_width = FALSE, position = "left"))
+```
+
+Since there are no mothers repeated for this dataset, we don't need to take into account the effect of motherid in any of the analysis.
+
+###Alpha diversity
+
+```{r AlphaPEmy, echo=FALSE}
+OTUVag_RA <- Myco_RA5000[[2]]
+DivCal_R <- estimate_richness(OTUVag_RA, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(OTUVag_RA))
+PREcol <- c("cyan4", "deeppink3")
+```
+
+Cyan: No preeclampsia; Pink: Preeclampsia
+
+```{r AlphaTest5PEmy, echo=FALSE, fig.height=5, fig.width=10, results='asis'}
+sample_data(OTUVag_RA)$Any.PE <- as.factor(sample_data(OTUVag_RA)$Any.PE)
+Dummy <- OTUVag_RA
+DivCal_R <- estimate_richness(Dummy, measures=c("Observed", "InvSimpson", "Chao1", "Shannon"))
+DivCal_R_df <- data.frame(DivCal_R, sample_data(Dummy))
+DivCal_R_df$Parity <- factor(DivCal_R_df$Parity)
+DivCal_R_df$motherid <- factor(DivCal_R_df$motherid)
+DivCal_R_df$Any.PE <- factor(DivCal_R_df$Any.PE)
+#CATEGORIZE BMI FOR TEST
+DivCal_R_df$BMI_Cat <- cut(DivCal_R_df$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+DivCal_R_df$BMI_Cat <- as.factor(DivCal_R_df$BMI_Cat)
+DivCal_R_df <- subset(DivCal_R_df, BMI_Cat!="NA")
+
+## Observed Richness
+DivCal_R_df2 <- subset(DivCal_R_df, BMI_Cat != "Underweight")
+DivCal_R_df2$BMI_Cat <- factor(DivCal_R_df2$BMI_Cat, levels=c("Normal", "Overweight", "Obese"))
+
+################################################# Observed richness
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Observed)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Richness", x = "Observed", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$Observed)
+mean(DivCal_R_df2$Observed)
+var(DivCal_R_df2$Observed)
+
+Obs_GAD <- glmmTMB(Observed ~ BMI_Cat*Any.PE + Parity*Any.PE, data = DivCal_R_df, family = nbinom2)
+#PE doesn't interact with BMI, but it does with Parity
+
+Obs_GAD <- glmmTMB(Observed ~  BMI_Cat + Parity*Any.PE, data = DivCal_R_df2, family = nbinom2)
+
+# no interaction
+Obs_GAD <- glmmTMB(Observed ~  BMI_Cat + Parity + Any.PE, data = DivCal_R_df2, family = nbinom2)
+
+ResObs <- Anova(Obs_GAD)
+summary(Obs_GAD)
+exp(confint(Obs_GAD, method = "profile"))
+
+#################################################     Chao1
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Chao1)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Chao1", x = "Chao1", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Chao1)
+mean(DivCal_R_df$Chao1)
+var(DivCal_R_df$Chao1)
+skewness(DivCal_R_df$Chao1)
+Chao1_Any.PE <- glmmTMB(Chao1 ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df, family = gaussian)
+Chao1_Any.PE_Gamma <- glmmTMB(Chao1 ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df, family = Gamma(link = "log"))
+performance::check_overdispersion(Chao1_Any.PE_Gamma)
+AIC(Chao1_Any.PE, Chao1_Any.PE_Gamma) #Gamma is better
+res <- simulateResiduals(Chao1_Any.PE_Gamma)
+plot(res)
+Anova(Chao1_Any.PE_Gamma) #There are no interactions
+
+Chao1_Any.PE_Gamma <- glmmTMB(Chao1 ~ Parity + BMI_Cat + Any.PE, data = DivCal_R_df, family = Gamma(link = "log"))
+Anova(Chao1_Any.PE_Gamma) 
+summary(Chao1_Any.PE_Gamma)
+#P-GAD = 0.79
+exp(confint(Chao1_Any.PE_Gamma, method = "profile"))
+
+#No significant differences detected
+
+##########################################################    InvSimpson
+
+#Data distribution
+ggplot(DivCal_R_df2, aes(x = InvSimpson)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of InvSimpson", x = "InvSimpson", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df2$InvSimpson)
+mean(DivCal_R_df2$InvSimpson)
+var(DivCal_R_df2$InvSimpson)
+
+#Testing differences in InvSimpson due to T1D status alone
+InvS_T1D <- glmmTMB(InvSimpson ~ BMI_Cat*Any.PE + Parity*Any.PE, data = DivCal_R_df2, family = Gamma(link = "log"))
+##No significant interactions
+InvS_T1D <- glmmTMB(InvSimpson ~ BMI_Cat + Parity + Any.PE, data = DivCal_R_df2, family = Gamma(link = "log"))
+
+ResObs3 <- Anova(InvS_T1D)
+summary(InvS_T1D)
+exp(confint(InvS_T1D, method = "profile"))
+
+#No significant differences detected
+
+##Shannon
+
+#Data distribution
+ggplot(DivCal_R_df, aes(x = Shannon)) +  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +  labs(title = "Histogram of Shannon", x = "Shannon", y = "Frequency")
+#Test normality
+shapiro.test(DivCal_R_df$Shannon)
+mean(DivCal_R_df$Shannon)
+var(DivCal_R_df$Shannon)
+#glmmTMB #continuous
+DivCal_R_df$Shannon2 <- DivCal_R_df$Shannon + 0.001
+Shannon_T1D_Gamma2 <- glmmTMB(Shannon2 ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df, family = Gamma(link = "log"))
+Shannon_T1D_Tweedie <- glmmTMB(Shannon2 ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df, family = tweedie(link = "log"))
+AIC(Shannon_T1D_Gamma2, Shannon_T1D_Tweedie)
+performance::check_overdispersion(Shannon_T1D_Tweedie)
+res <- simulateResiduals(Shannon_T1D_Gamma2)
+plot(res)
+
+#If Shannon is between 0 and 4, use Beta regression: It is
+DivCal_R_df$Shannon_scaled <- (DivCal_R_df$Shannon + 0.001) / (max(DivCal_R_df$Shannon) + 0.002)
+model_beta <- glmmTMB(Shannon_scaled ~ Parity*Any.PE + BMI_Cat*Any.PE, data = DivCal_R_df, family = beta_family(link = "logit"))
+res <- simulateResiduals(model_beta)
+plot(res)
+
+Anova(model_beta) # No significant interactions
+model_beta <- glmmTMB(Shannon_scaled ~ Parity + BMI_Cat + Any.PE, data = DivCal_R_df, family = beta_family(link = "logit"))
+res <- simulateResiduals(model_beta) #This has no deviations!
+plot(res)
+Anova(model_beta) 
+summary(model_beta)
+#P-T1D = 0.8053
+exp(confint(model_beta, method = "profile"))
+
+
+#ADJUSTMENTS FOR MULTIPLE TESTING OF ALPHA DIVERSITY METRICS (these were applied across all metrics)
+###@@@@@@@@@@@@@@@@@@ FUNGI
+p_adjFunPE <- p.adjust(c(0.88, 079, 0.41, 0.81), method = "BH", n=4)
+```
+
+###Beta diversity
+
+```{r BetaTest6PEmy, echo=FALSE, fig.height=15, fig.width=10, results='asis'}
+PlotList <- vector('list', length(5))
+
+for(i in 1:5){
+OTU_Plot <- transform_sample_counts(Myco_RA5000[[i]], function(x) 100 * x/sum(x))
+OTU_Plot <- transform_sample_counts(OTU_Plot, function(x) log(1 + x) )
+OTU_Plot <- subset_samples(OTU_Plot, Any.PE!="NA")
+OTU_Plot <- subset_samples(OTU_Plot, Parity!="NA")
+OTU_Plot2 <- subset_samples(OTU_Plot, BMI!="NA")
+
+D <- distance(OTU_Plot, method="bray")
+Meta <- as.matrix(sample_data(OTU_Plot))
+Meta_df <- as.data.frame(Meta)
+Meta_df$SeqRun <- as.factor(Meta_df$SeqRun)
+Meta_df$Parity <- as.factor(Meta_df$Parity)
+Meta_df$Any.PE <- as.factor(Meta_df$Any.PE)
+Meta_df$motherid <- as.factor(Meta_df$motherid)
+Meta_df$HLA <- as.factor(Meta_df$HLA)
+
+D2 <- distance(OTU_Plot2, method="bray")
+Meta2 <- as.matrix(sample_data(OTU_Plot2))
+Meta_df2 <- as.data.frame(Meta2)
+Meta_df2$Parity <- as.factor(Meta_df2$Parity)
+Meta_df2$Any.PE <- as.factor(Meta_df2$Any.PE)
+Meta_df2$BMI <- as.numeric(Meta_df2$BMI)
+Meta_df2$HLA <- as.factor(Meta_df2$HLA)
+Meta_df2 <- subset(Meta_df2, HLA!="NA")
+
+#testing interaction between parity, BMI and HLA with Preeclampsia --> Nothing and any taxonomic level including species
+  #AdonisR <- adonis2(D2 ~  Parity*Any.PE + BMI*Any.PE,  data=Meta_df2)
+  AdonisR <- adonis2(D2 ~  Parity + BMI + Any.PE,  data=Meta_df2) #No interactions, so we remove them
+  print(AdonisR)
+ 
+## 95% CI
+  CI.Rsq(0.00426, n=64, k=3)
+}
+
+###@@@@@@@@@@@@@@@@@@ FUNGI (these were applied across different taxonomic levels
+p_adjBFunPE <- p.adjust(c(0.79, 0.79, 0.77, 0.34, 0.64), method = "BH", n=5)
+
+```
+
+###Differential abundance analysis PE myco
+
+```{r DAPEvec, echo=FALSE}
+for(i in 2:6){
+    BacFilt <- Myco[[i]]
+    BacFilt <- prune_samples(sample_sums(BacFilt) > 5000, BacFilt)
+    BacFilt <- prune_taxa(taxa_sums(BacFilt) > 0, BacFilt)
+    
+    X <- cut(sample_data(BacFilt)$BMI, breaks = c(-Inf,18.5,25,30,Inf), labels = c("Underweight","Normal","Overweight", "Obese"))
+    sample_data(BacFilt)$BMI_Cat <- X
+    BacFilt <- subset_samples(BacFilt, BMI_Cat!="NA")
+    BacFilt <- subset_samples(BacFilt, BMI_Cat!="Underweight")
+
+  if(i==2){
+  SpeciesPE <- t(data.frame(otu_table(BacFilt)[c("44861a14bec90866988ae47164f51a7d", "2d2f01df039d1dd679fc98100290792f", "631d7fe330839888af3c1f53f85f7991"),], check.names = F))  #Genus level for extra analysis
+  Data <- sample_data(BacFilt)[,c("Any.PE", "BMI_Cat", "Parity")]
+  SS_SpeciesPE<- sample_sums(BacFilt)
+  Species_DatPE <- cbind(SpeciesPE, Data)
+  }
+  
+  if(i==3){
+  GenusPE <- t(data.frame(otu_table(BacFilt)[c("g__Malassezia", "g__Candida"),], check.names = F))  #Genus level for extra analysis
+  DataPE <- sample_data(BacFilt)[,c("Any.PE", "BMI_Cat", "Parity")]
+  SS_GenusPE <- sample_sums(BacFilt)
+  Genus_DatPE <- cbind(GenusPE, DataPE)
+  }
+  
+  if(i==4){
+  FamilyPE <- t(data.frame(otu_table(BacFilt)[c("f__Malasseziaceae", "f__Saccharomycetaceae", "f__Peniophoraceae"),], check.names = F))  #Family level for extra analysis
+  SS_FamilyPE <- sample_sums(BacFilt)
+  GF_DFPE <- cbind(Genus_DatPE, FamilyPE, SS_FamilyPE)
+  }
+  
+  if(i==5){
+  Order <- t(data.frame(otu_table(BacFilt)[c("o__Russulales", "o__Polyporales", "o__Malasseziales", "o__Saccharomycetales"),], check.names = F))  #Family level for extra analysis
+  GF_DFPE <- cbind(GF_DFPE, Order)
+  }
+  
+  if(i==6){
+  Phylum <- t(data.frame(otu_table(BacFilt)[c("p__Basidiomycota", "p__Ascomycota"),], check.names = F))  #Family level for extra analysis
+  GF_DFPE <- cbind(GF_DFPE, Phylum)
+  }
+
+}  
+ 
+#Using unrarefied (raw) data since GLMMs Handle Unequal Sequencing Depths Naturally. glmmTMB models, especially negative binomial (nbinom1 or nbinom2), account for overdispersion and can incorporate sequencing depth as an offset [library size (total read count per sample)]. offset(log(library_size)) ensures that differences in sequencing depth are accounted for without discarding data.
+#If zero inflation is an issue, glmmTMB also allows zero-inflated models (family = znbinom2 or znbinom1).
+#Model Diagnostics:
+#Check for overdispersion using performance::check_overdispersion(model).
+#Assess zero inflation using performance::check_zeroinflation(model).
+#Visualize residuals using DHARMa::simulateResiduals(model).
+
+#Species
+
+#Species (Species_DatPE)
+Species_DatPE$Any.PE <- factor(Species_DatPE$Any.PE)
+Species_DatPE$BMI_Cat <- factor(Species_DatPE$BMI_Cat)
+Species_DatPE$Parity <- factor(Species_DatPE$Parity)
+
+#1) s__Malassezia_restricta --> 2d2f01df039d1dd679fc98100290792f
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = Species_DatPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ Parity + BMI_Cat + Any.PE, data = Species_DatPE, family = nbinom2)
+nb_model3 <- glmmTMB(`2d2f01df039d1dd679fc98100290792f` ~ BMI_Cat + Any.PE, data = Species_DatPE, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) 
+#           Chisq Df Pr(>Chisq)  
+#BMI_Cat 0.0351  2     0.9826
+#Any.PE  1.3216  1     0.2503
+summary(nb_model3) #Est = 1.3848
+confint(nb_model3, method = "profile")
+#-0.7313036 4.632482
+
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+summary_df <- Species_DatPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(`2d2f01df039d1dd679fc98100290792f`, na.rm = TRUE),
+            SE = sd(`2d2f01df039d1dd679fc98100290792f`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+
+#2) s__Candida_albicans --> 631d7fe330839888af3c1f53f85f7991
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(`631d7fe330839888af3c1f53f85f7991` ~ Parity + Any.PE + BMI_Cat  + Any.PE:BMI_Cat, zi = ~ 1, data = Species_DatPE, family = nbinom1)
+Anova(nb_model2)
+nb_model3 <- glmmTMB(`631d7fe330839888af3c1f53f85f7991` ~ Any.PE + BMI_Cat  + Any.PE:BMI_Cat, zi = ~ 1, data = Species_DatPE, family = nbinom1)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) 
+#           Chisq Df Pr(>Chisq)
+#Any.PE         1.5320  1    0.21582  
+#BMI_Cat        4.4373  2    0.10876  
+#Any.PE:BMI_Cat 7.5245  2    0.02323 * There is an interaction of PE with BMI
+
+ResEMPairwise <- emmeans(nb_model3, pairwise ~ Any.PE | BMI_Cat)
+#BMI_Cat = Normal:
+#contrast          estimate    SE  df z.ratio p.value
+#Any.PE0 - Any.PE1     2.22 1.080 Inf   2.052  0.0401  --> CI  0.10     4.338
+#BMI_Cat = Overweight:
+#Any.PE0 - Any.PE1    -0.80 0.573 Inf  -1.396  0.1628  --> CI -1.92     0.324
+#BMI_Cat = Obese:
+#Any.PE0 - Any.PE1    -1.19 0.673 Inf  -1.773  0.0763  --> CI -2.51     0.126
+
+confint(ResEMPairwise, method = "profile")
+
+summary_df <- Species_DatPE %>%
+  group_by(Any.PE, BMI_Cat) %>% 
+  summarise(Mean = mean(`631d7fe330839888af3c1f53f85f7991`, na.rm = TRUE),
+            SE = sd(`631d7fe330839888af3c1f53f85f7991`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+emm <- emmeans(nb_model3, ~ BMI_Cat * Any.PE, type = "response") ## --> This extracts the estimated marginal means (EMMs) of the response variable on the original scale (because of type = "response"). Since your model has a log link, emmeans() automatically applies the inverse transformation (exp()) to return predictions on the InvSimpson scale.
+emm_df <- as.data.frame(emm)
+
+#FOR PLOT
+
+SN <- "Candida albicans"
+summary_df2 <- data.frame(emm_df)
+summary_df2$Taxa <- c(SN, SN, SN, SN, SN, SN)
+summary_df2$Pvalue <- c("p=0.04*", "p=0.16", "p=0.08", NA, NA, NA)
+summary_df2$response <- c("12011", "11659", "6481", "1.5", "14277", "19435")
+summary_df2$response <- as.numeric(summary_df2$response)
+summary_df2$SE <- c("2296", "3301", "2698", "1.5", "2222", "9977")
+summary_df2$SE <- as.numeric(summary_df2$SE)
+Summary_PE_S <- summary_df2
+save(Summary_PE_S, file="./Data_Figure_4c.RData")
+#load(file="./Data_Figure_4c.RData")
+pd <- position_dodge(0.5)
+p2 <- ggplot(Summary_PE_S, aes(x=BMI_Cat, y=response, colour=`Any.PE`, label=Pvalue, fontface = "italic"))
+DAFungiPE <-  p2 + geom_errorbar(aes(ymin=response-SE, ymax=response+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16, color="black"), axis.text.x = element_text(angle = 0,  size=17, color="black")) + theme(legend.title = element_text(size=13, face="bold"))  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(0, 30000), breaks = seq(0, 30000, by = 5000)) + geom_text(angle = 0, hjust=1, vjust=-3.5, color="black", size=6, check_overlap = TRUE) + ylab("Raw abundances") + scale_fill_manual(values=PREcol) + scale_color_manual(values=PREcol) + theme(legend.position='none') + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+DAFungiPE
+save(DAFungiPE, file="./DA_PE_Fungi_Plot4c.RData")
+#load(file="./DA_PE_Fungi_Plot4c.RData")
+
+
+# 1) Genus Malassezia
+
+nb_model2 <- glmmTMB(g__Malassezia ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2) #No significant interactions with BMI
+nb_model2 <- glmmTMB(g__Malassezia ~ Parity + BMI_Cat + Any.PE, zi = ~ Any.PE, data = GF_DFPE, family = nbinom2)
+res <- simulateResiduals(nb_model2) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model2) #No overdisperssion
+performance::check_zeroinflation(nb_model2) #Zeroes within the tolerance (term zi = ~ Any.PE added due to many zeroes)
+Anova(nb_model2) #No significant differences detected due to T1D status
+#         Chisq Df Pr(>Chisq)
+#Parity  0.2718  1    0.60214  
+#BMI_Cat 0.3859  2    0.82454  
+#Any.PE  2.9295  1    0.08697 . #Not significant 
+summary(nb_model2) #Est = 1.6245
+confint(nb_model2, method = "profile")
+#-0.1818201 3.749537
+# Calculate mean and standard error of g__Malassezia per T1Dstatus
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(`g__Malassezia`, na.rm = TRUE),
+            SE = sd(`g__Malassezia`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+
+# 2) Genus Candida
+modelGF <- glmmTMB(g__Candida ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, zi = ~ Any.PE, data = GF_DFPE, family = nbinom1)
+modelGF2 <- glmmTMB(g__Candida ~ BMI_Cat + Any.PE+ Any.PE:BMI_Cat, zi = ~ BMI_Cat, data = GF_DFPE, family = nbinom1)
+AIC(modelGF, modelGF2) #modelGF is better
+res <- simulateResiduals(modelGF) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(modelGF2) #Underdisperssion detected
+performance::check_zeroinflation(modelGF2) ## Probable zero inflation
+
+Anova(modelGF) #Interaction between PE and BMI
+
+ResEMPairwise <- emmeans(modelGF, pairwise ~ Any.PE | BMI_Cat)
+#BMI_Cat = Normal:
+#contrast          estimate    SE  df z.ratio p.value
+#Any.PE0 - Any.PE1    2.423 1.090 Inf   2.230  0.0257  --> CI 0.294     4.553
+#BMI_Cat = Overweight:
+#Any.PE0 - Any.PE1   -0.384 0.543 Inf  -0.707  0.4795  --> CI -1.449     0.681
+#BMI_Cat = Obese:
+#Any.PE0 - Any.PE1   -1.364 0.579 Inf  -2.355  0.0185  --> CI -2.499    -0.229
+
+confint(ResEMPairwise, method = "profile")
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE, BMI_Cat) %>% 
+  summarise(Mean = mean(`g__Candida`, na.rm = TRUE),
+            SE = sd(`g__Candida`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+emm <- emmeans(nb_model3, ~ BMI_Cat * Any.PE, type = "response") ## --> This extracts the estimated marginal means (EMMs) of the response variable on the original scale (because of type = "response"). Since your model has a log link, emmeans() automatically applies the inverse transformation (exp()) to return predictions on the InvSimpson scale.
+emm_df <- as.data.frame(emm)
+
+#FOR PLOT
+
+SN <- "Genus: Candida"
+summary_df2 <- data.frame(summary_df)
+summary_df2$Taxa <- c(SN, SN, SN, SN, SN, SN)
+summary_df2$Pvalue <- c("p=0.03*", "p=0.48", "p=0.02*", NA, NA, NA)
+summary_df2$Mean <- round(as.numeric(summary_df2$Mean),0)
+summary_df2$SE <- round(as.numeric(summary_df2$SE), 0)
+summary_df2$Any.PE <- as.factor(summary_df2$Any.PE)
+Summary_PE_G <- summary_df2
+save(Summary_PE_G, file="./Data_Figure_4d.RData")
+pd <- position_dodge(0.5)
+p2G <- ggplot(Summary_PE_G, aes(x=BMI_Cat, y=Mean, colour=`Any.PE`, label=Pvalue, fontface = "italic"))
+DAFungiPEG <-  p2G + geom_errorbar(aes(ymin=Mean-SE, ymax=Mean+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank()) + theme(axis.title.y = element_text(size=18)) + theme(axis.text.y =element_text(size=16, color="black"), axis.text.x = element_text(angle = 0,  size=17, color="black")) + theme(legend.title = element_text(size=13, face="bold"))  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(0, 30000), breaks = seq(0, 30000, by = 5000)) + geom_text(angle = 0, hjust=1, vjust=-3.5, color="black", size=6, check_overlap = TRUE) + ylab("Raw abundances") + scale_fill_manual(values=PREcol) + theme(legend.position='none') + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_color_manual(values=PREcol) 
+DAFungiPEG
+save(DAFungiPEG, file="./DA_PE_Fungi_Plot4d.RData")
+#load(file="./DA_PE_Fungi_Plot4d.RData")
+
+# 3) Family Malasseziaceae (is exactly the same as the Malassezia genus)
+
+# 4) Family Saccharomycetaceae
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(f__Saccharomycetaceae ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2) #No significant interaction
+nb_model2 <- glmmTMB(f__Saccharomycetaceae ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(f__Saccharomycetaceae ~ BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No overdisperssion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to PE status
+#         Chisq Df Pr(>Chisq)
+#BMI_Cat 1.2387  2     0.5383
+#Any.PE  1.2887  1     0.2563
+
+summary(nb_model3) # Est = 2.3879  
+
+confint(nb_model3, method = "profile") #Est = -1.737545 9.720504
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>% 
+  summarise(Mean = mean(`f__Saccharomycetaceae`, na.rm = TRUE),
+            SE = sd(`f__Saccharomycetaceae`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+
+# 5) Family Peniophoraceae
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(f__Peniophoraceae ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2) #No significant interaction
+nb_model2 <- glmmTMB(f__Peniophoraceae ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(f__Peniophoraceae ~ BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to PE status
+#         Chisq Df Pr(>Chisq)
+#BMI_Cat 0.7801  2     0.6770
+#Any.PE  0.2409  1     0.6236
+summary(nb_model3) # Est = -1.2907 
+
+confint(nb_model3, method = "profile") #Est = -6.266462 5.171800
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>% 
+  summarise(Mean = mean(`f__Peniophoraceae`, na.rm = TRUE),
+            SE = sd(`f__Peniophoraceae`, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#6) Order Russulales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Russulales ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Russulales ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(o__Russulales ~ BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 0.7801  2     0.6770
+#Any.PE  0.2409  1     0.6236
+summary(nb_model3)
+#Estimate = -1.2907  
+confint(nb_model3, method = "profile")
+#-6.266462 5.171800
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(o__Russulales, na.rm = TRUE),
+            SE = sd(o__Russulales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#7) Order Polyporales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Polyporales ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Polyporales ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(o__Polyporales ~ BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 1.1785  2    0.55475  
+#Any.PE  6.0215  1    0.01413 *
+summary(nb_model3)
+#Estimate = -3.4375
+confint(nb_model3, method = "profile")
+#-5.893676  0.705049
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(o__Polyporales, na.rm = TRUE),
+            SE = sd(o__Polyporales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#FOR PLOT
+
+SN <- "Order: Polyporales"
+summary_df2 <- data.frame(summary_df)
+summary_df2$Taxa <- c(SN, SN)
+summary_df2$Pvalue <- c("p=0.014*", NA)
+summary_df2$Mean <- round(as.numeric(summary_df2$Mean),0)
+summary_df2$SE <- round(as.numeric(summary_df2$SE), 0)
+summary_df2$Any.PE <- as.factor(summary_df2$Any.PE)
+Summary_PE_O <- summary_df2
+save(Summary_PE_O, file="./Data_Figure_4e.RData")
+#load(file="./Data_Figure_4e.RData")
+pd <- position_dodge(0.5)
+p2O <- ggplot(Summary_PE_O, aes(x=Taxa, y=Mean, colour=`Any.PE`, label=Pvalue, fontface = "italic"))
+DAFungiPEO <-  p2O + geom_errorbar(aes(ymin=Mean-SE, ymax=Mean+SE), linewidth=1.5, width=.2, position=pd) + geom_point(position=pd, size=3, shape=21, fill="white") + theme(axis.title.x = element_blank(), axis.text.x=element_blank()) + theme(axis.title.y = element_text(size=18, color="black")) + theme(axis.text.y =element_text(size=16, color="black")) + theme(legend.title = element_text(size=13, face="bold"))  + theme(plot.title = element_text(size=12)) + scale_y_continuous(labels = scales::number_format(accuracy = 1), limits = c(0, 3600), breaks = seq(0, 3600, by = 450)) + geom_text(angle = 0, hjust=1, vjust=8, color="black", size=6, check_overlap = TRUE) + ylab("Raw abundances") + scale_fill_manual(values=PREcol) + theme(legend.position='none') + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_color_manual(values=PREcol) 
+DAFungiPEO
+save(DAFungiPEO, file="./DA_PE_Fungi_Plot4e.RData")
+#load(file="./DA_PE_Fungi_Plot4e.RData")
+
+#8) Order Malasseziales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Malasseziales ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Malasseziales ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(o__Malasseziales ~ BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 0.1552  2     0.9254
+#Any.PE  1.8659  1     0.1720
+summary(nb_model3)
+#Estimate = 1.6759 
+confint(nb_model3, method = "profile")
+#-0.5974757 4.729111
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(o__Malasseziales, na.rm = TRUE),
+            SE = sd(o__Malasseziales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#9) Order Saccharomycetales
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(o__Saccharomycetales ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(o__Saccharomycetales ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(o__Saccharomycetales ~ BMI_Cat + Any.PE, zi = ~ BMI_Cat, data = GF_DFPE, family = nbinom1)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 3.8559  2     0.1454
+#Any.PE  0.5221  1     0.4699
+summary(nb_model3)
+#Estimate = 0.2155 
+confint(nb_model3, method = "profile")
+#-0.4227834   0.7700573
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(o__Saccharomycetales, na.rm = TRUE),
+            SE = sd(o__Saccharomycetales, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#10) Phylum Basidiomycota
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(p__Basidiomycota ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom1)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(p__Basidiomycota ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom1)
+nb_model3 <- glmmTMB(p__Basidiomycota ~ BMI_Cat + Any.PE,  zi = ~ BMI_Cat, data = GF_DFPE, family = nbinom1)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 0.8851  2     0.6424
+#Any.PE  0.0775  1     0.7807
+summary(nb_model3)
+#Estimate = -0.7582 
+confint(nb_model3, method = "profile")
+# -0.9670332  0.6448046
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(p__Basidiomycota, na.rm = TRUE),
+            SE = sd(p__Basidiomycota, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+#11) Phylum Ascomycota
+
+# Fit Negative Binomial Model using glmmTMB
+nb_model2 <- glmmTMB(p__Ascomycota ~ Any.PE + BMI_Cat + Parity + Any.PE:BMI_Cat, data = GF_DFPE, family = nbinom2)
+Anova(nb_model2)
+nb_model2 <- glmmTMB(p__Ascomycota ~ Parity + BMI_Cat + Any.PE, data = GF_DFPE, family = nbinom2)
+nb_model3 <- glmmTMB(p__Ascomycota ~ BMI_Cat + Any.PE, zi = ~  BMI_Cat:Any.PE, data = GF_DFPE, family = nbinom1)
+AIC(nb_model2, nb_model3) #Model 3 is better
+res <- simulateResiduals(nb_model3) #No significant deviations detected
+plot(res)
+performance::check_overdispersion(nb_model3) #No ovdrdispersion
+performance::check_zeroinflation(nb_model3) #Zeroes within the tolerance
+Anova(nb_model3) #No significant differences detected due to T1D status
+#           Chisq Df Pr(>Chisq)
+#BMI_Cat 4.6062  2    0.09995 .
+#Any.PE  0.0711  1    0.78971 
+summary(nb_model3)
+#Estimate = 0.06893 
+confint(nb_model3, method = "profile")
+#-0.4915933    0.5418144
+
+summary_df <- GF_DFPE %>%
+  group_by(Any.PE) %>%
+  summarise(Mean = mean(p__Ascomycota, na.rm = TRUE),
+            SE = sd(p__Ascomycota, na.rm = TRUE) / sqrt(n()))
+# Print results
+print(summary_df)
+
+```
+
+There were no significant differences in specific taxa
+
+###Composed figures
+
+```{r Composed_F2, echo=FALSE, fig.height=10, fig.width=10, results='asis', message=FALSE}
+#FOR COMPOSED FIGURE 3
+Plot2 <- ggarrange(Alpha_Microbiome_GAD, DAResultsGAD_Micro, ncol=2, widths = c(1.2,0.8), labels = c("a", "b"), font.label = list(size = 20))
+ComposedF3 <- ggarrange(Plot2, DAFungiGAD3T, ncol=1, labels = c("", "c"), font.label = list(size = 20)) 
+ComposedF3
+
+#FOR COMPOSED FIGURE 4
+Plot3 <- ggarrange(Alpha_BMI_PE, DAMicroPE, DAFungiPEO, ncol=3, widths = c(1.4,1,1), labels = c("a", "b", "e"), font.label = list(size = 20))
+Plot4 <- ggarrange(DAFungiPE, DAFungiPEG, ncol=2, labels = c("c", "d"), font.label = list(size = 20))
+ComposedF4 <- ggarrange(Plot3, Plot4, ncol=1, font.label = list(size = 20)) 
+ComposedF4
+```
+
+

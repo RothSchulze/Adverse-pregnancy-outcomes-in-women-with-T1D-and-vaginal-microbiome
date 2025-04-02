@@ -1,0 +1,266 @@
+---
+title: "Vaginal micro-mycobiome analysis 2025"
+author: "Alexandra Roth Schulze"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  html_document:
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+---
+
+```{r echo=FALSE}
+options(width = 90)
+```
+
+```{r ,include=FALSE}
+library(knitr)
+opts_chunk$set(comment = NA, warning=FALSE, message=FALSE, echo=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+library("ggplot2")
+theme_set(theme_bw())
+pal = "Set1"
+scale_colour_discrete <- function(palname = pal, ...) {
+    scale_colour_brewer(palette = palname, ...)
+}
+scale_fill_discrete <- function(palname = pal, ...) {
+    scale_fill_brewer(palette = palname, ...)
+}
+```
+
+
+```{r PackageLoad, tidy=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+library("phyloseq")
+library("vegan")
+```
+
+#Pre-processing
+
+The taxonomic classification was further improved by BLASTing each sequence and assigning a species name based on this in order to agglomerate features into OTUs based on this species assignation. The file containing the information can be found in the folder of this analysis. It will tell to which species each feature had a equally good (same identity %) hit to and to which one corresponds.
+
+Methodology description cited ( doi: 10.7554/eLife.57051 --> https://elifesciences.org/articles/57051) the authors describe as part of their pipeline:
+
+For the three most dominant ASVs in each vaginal CST, we performed BLASTN (v 2.10.1+) against the NCBI 16S ribosomal RNA database (Zhang et al., 2000), excluding models (XM/XP) and uncultured/environmental samples (Source data 2). Alignments were filtered to minimum 99% identity, and the ASVs were assigned to unique species, when possible. In these cases where multiple species aligned equally well, we used published studies to select the most likely species. As an example, L. crispatus and L. acidophilus could not be distinguished based on the sequenced region, and as published studies on the vaginal microbiota concur that L. crispatus, in contrast to L. acidophilus, constitute an important part of the vaginal microbiota, we refer to L. crispatus/L. acidophilus solely as L. crispatus. Based on this reasoning, we will also refer to L. gasseri/johnsonii solely as L. gasseri (Antonio et al., 1999; Kiss et al., 2007; Vásquez et al., 2002).
+
+#Microbiome
+
+```{r Imp.format, echo=FALSE}
+###Importing and formating microbiome
+setwd("~/Documents/ENDIA Project/Data and analyses/ENDIA Projects analysis/2025 Sequencing processing with qiime2 2024.10/Vaginal project/") # HERE YOU SET YOUR DIRECTORY WHERE DATA IS CONTAINED
+Feat <- load(file="./Bacterial_Vaginal_Features_Phyloseq_Obj_Filtered1.RData")
+#Bacterial_VCMCFHS_AFilt1
+  
+#CHECK HERE
+#New classification (from Kingdom to family), species and genus classifications will be reassigned as per BLAST n below
+tax_table(Bacterial_VCMCFHS_AFilt1)["7c942fbcc204080381806f4cc91f41f2",] <- tax_table(Bacterial_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Bacterial_VCMCFHS_AFilt1)["9df9743e450924380cd7a4d3cd9c8a59",] <- tax_table(Bacterial_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Bacterial_VCMCFHS_AFilt1)["7d35d4541ed0fb016dad07caad37f556",] <- tax_table(Bacterial_VCMCFHS_AFilt1)["9002ee8e03d4dfdf26665209e354ce2f",]
+tax_table(Bacterial_VCMCFHS_AFilt1)["297edc18fabd1d1b3234f8ef062a36c2",] <- tax_table(Bacterial_VCMCFHS_AFilt1)["e716d8c424a91dc74faa15671716cfc1",]
+tax_table(Bacterial_VCMCFHS_AFilt1)["30d3ed513d2487ebacec1d3806b5ccae",] <- tax_table(Bacterial_VCMCFHS_AFilt1)["563395e43ea73827809d66727b023e5b",]
+tax_table(Bacterial_VCMCFHS_AFilt1)["30d3ed513d2487ebacec1d3806b5ccae", "Family"] <- "Lawsonellaceae"
+
+NewClass <- read.table(file="./BLASTn_classification_vaginal_microbiome.csv", header=TRUE, row.names=1, sep="\t")
+NewClass[,"Good_Class"] <- as.character(NewClass[,"Good_Class"])
+NewClass[,"Genus"] <- as.character(NewClass[,"Genus"])
+colnames(tax_table(Bacterial_VCMCFHS_AFilt1))[1] <- "Kindom"
+rownames(NewClass) <- NewClass[,"OTU_names"]
+ 
+Bacterial_VCMCFHS_AFilt12 <- Bacterial_VCMCFHS_AFilt1
+new_order <- sort(taxa_names(Bacterial_VCMCFHS_AFilt12)) 
+# Reorder the OTU table
+Reordered_ASV <- otu_table(Bacterial_VCMCFHS_AFilt12)[,new_order]
+# Reorder the taxonomy table
+Reordered_Tax <- tax_table(Bacterial_VCMCFHS_AFilt12)[new_order, ]
+
+#Make phyloseq object
+Reffasta <- refseq(Bacterial_VCMCFHS_AFilt12)
+Meta <- sample_data(Bacterial_VCMCFHS_AFilt12)
+Bacterial_VCMCFHS_AFilt13 <- phyloseq(otu_table(Reordered_ASV, taxa_are_rows = F),  tax_table(Reordered_Tax), sample_data(Meta), refseq(Reffasta))
+
+tax_table(Bacterial_VCMCFHS_AFilt13)[,"Species"] <- NewClass[,"Good_Class"]
+tax_table(Bacterial_VCMCFHS_AFilt13)[,"Genus"] <- NewClass[,"Genus"]
+OTUVag <- tax_glom(Bacterial_VCMCFHS_AFilt13, taxrank = "Species", NArm=FALSE)
+OTUVag <-prune_samples(sample_sums(OTUVag)>=1000, OTUVag)
+ #Current phyla
+#"Bacteroidota"     "Firmicutes"       "Actinobacteriota" "Proteobacteria"  "Fusobacteriota"   "Campilobacterota"
+
+#Genus
+OTUVag_G <- tax_glom(OTUVag, taxrank = rank_names(OTUVag_G)[6], NArm=FALSE)
+taxa_names(OTUVag_G) <- tax_table(OTUVag_G)[,"Genus"]
+
+#Family
+OTUVag_F <- tax_glom(OTUVag, taxrank = "Family", NArm=FALSE)
+taxa_names(OTUVag_F) <- tax_table(OTUVag_F)[,"Family"]
+
+#Order
+OTUVag_O <- tax_glom(OTUVag, taxrank = "Order", NArm=FALSE)
+taxa_names(OTUVag_O) <- tax_table(OTUVag_O)[,"Order"]
+
+#Phylum
+OTUVag_P <- tax_glom(OTUVag, taxrank = "Phylum", NArm=FALSE)
+taxa_names(OTUVag_P) <- tax_table(OTUVag_P)[,"Phylum"]
+
+VecO <- list("Species" = OTUVag, "Genus" = OTUVag_G, "Family"= OTUVag_F, "Order"= OTUVag_O, "Phylum"= OTUVag_P)
+
+#Rarefy
+OTUVag_RA <- rarefy_even_depth(OTUVag, sample.size = 7000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Genus
+OTUVag_RAG <- tax_glom(OTUVag_RA, taxrank = "Genus", NArm=FALSE)
+taxa_names(OTUVag_RAG) <- tax_table(OTUVag_RAG)[,"Genus"]
+
+#Family
+OTUVag_RAF <- tax_glom(OTUVag_RA, taxrank = "Family", NArm=FALSE)
+taxa_names(OTUVag_RAF) <- tax_table(OTUVag_RAF)[,"Family"]
+
+#Order
+OTUVag_RAO <- tax_glom(OTUVag_RA, taxrank = "Order", NArm=FALSE)
+taxa_names(OTUVag_RAO) <- tax_table(OTUVag_RAO)[,"Order"]
+
+#Phylum
+OTUVag_RAP <- tax_glom(OTUVag_RA, taxrank = "Phylum", NArm=FALSE)
+taxa_names(OTUVag_RAP) <- tax_table(OTUVag_RAP)[,"Phylum"]
+
+#Dummy
+TLevel<-c("Species", "Genus", "Family", "Order", "Phylum")
+
+Vec <- list("Species" = OTUVag_RA, "Genus" = OTUVag_RAG, "Family"= OTUVag_RAF, "Order"= OTUVag_RAO, "Phylum"= OTUVag_RAP)
+Vec2 <- list("Species" = OTUVag_RA, "Genus" = OTUVag_RAG, "Family"= OTUVag_RAF, "Order"= OTUVag_RAO, "Phylum"= OTUVag_RAP)
+
+for (i in 1:5) {
+#Dummy <- Vec[[i]]
+Dummy <- VecO[[i]]
+#Making sure each factor has the correct class
+#This factor corresponds to extraction batch
+sample_data(Dummy)$SeqRun <- as.factor(sample_data(Dummy)$SeqRun)
+#This factor corresponds to gestational age (day into pregnancy in which the sample was taken)
+sample_data(Dummy)$Days <- as.integer(as.character(sample_data(Dummy)$Days))
+#This factor corresponds to conception age
+sample_data(Dummy)$Age <- as.numeric(as.character(sample_data(Dummy)$Age))
+#This factor corresponds to Body Mass Index at conception time
+sample_data(Dummy)$BMI <- as.numeric(as.character(sample_data(Dummy)$BMI))
+#This factor corresponds to Human leukocyte antigen (HLA) type of the women
+sample_data(Dummy)$HLA <- as.factor(sample_data(Dummy)$HLA)
+#This factor corresponds to parity (which refers to if the women already had children before the current pregnancy)
+sample_data(Dummy)$Parity <- as.factor(sample_data(Dummy)$Parity)
+#This factor corresponds to a unique identifier per person (i.e. if the woman contributed samples from different pregnancies, those samples belong to the same motherid)
+sample_data(Dummy)$motherid <- as.factor(sample_data(Dummy)$motherid)
+#This factor corresponds to T1D status
+sample_data(Dummy)$T1Dstatus <- as.factor(sample_data(Dummy)$T1Dstatus)
+#This factor corresponds to trimester
+sample_data(Dummy)$TriCorr <- as.factor(sample_data(Dummy)$TriCorr)
+
+#Vec2[[i]] <- Dummy
+VecO[[i]] <- Dummy
+}
+#VecO --> Is the data without rarefaction
+#Vec2 --> Is the Rarefied data
+#Sample without HLA info should be removed when this factor i included in the statistical models in later analyses
+Bac <- VecO
+Bac_RA <- Vec2
+save(Bac, Bac_RA, file="./MicrobiomeObjects.RData")
+```
+
+#Mycobiome 
+
+```{r Myco, echo=FALSE, fig.height=12, fig.width=16}
+##Importing mycobiome
+Feat <- load(file="./Myco_ITS1_R1_CU_Filter1.RData")
+#Myco_ITS1_R1_CU_Filter1
+
+#phyloseq-class experiment-level object
+#otu_table()   OTU Table:         [ 593 taxa and 153 samples ]
+#sample_data() Sample Data:       [ 153 samples by 11 sample variables ]
+#tax_table()   Taxonomy Table:    [ 593 taxa by 8 taxonomic ranks ]
+#phy_tree()    Phylogenetic Tree: [ 593 tips and 591 internal nodes ]
+#refseq()      DNAStringSet:      [ 593 reference sequences ] 
+
+#Note, before there were also 153 samples at this point
+
+##FILTER SEQUENCES CLASSIFIED AS UNASSIGNED
+Myco_ITS1_R1_CU_Filter1_F <- subset_taxa(Myco_ITS1_R1_CU_Filter1, Kindom == "k__Fungi")
+#This doesn't remove any feature or sample
+Myco_ITS1_R1_CU_Filter1_F <- subset_samples(Myco_ITS1_R1_CU_Filter1_F, SampleType == "Vagina")
+
+sample_names(Myco_ITS1_R1_CU_Filter1_F) <- sample_data(Myco_ITS1_R1_CU_Filter1_F)$Merging
+
+NewMet <- read.table(file="./Metadata_8_17_Merged2PET1D.csv", header=TRUE, row.names=1, sep="\t")
+
+Myco_ITS1_R1_CU_Filter1_F <- phyloseq(otu_table(Myco_ITS1_R1_CU_Filter1_F), tax_table(Myco_ITS1_R1_CU_Filter1_F), phy_tree(Myco_ITS1_R1_CU_Filter1_F), refseq(Myco_ITS1_R1_CU_Filter1_F), sample_data(NewMet))
+
+#phyloseq-class experiment-level object
+#otu_table()   OTU Table:         [ 593 taxa and 151 samples ]
+#sample_data() Sample Data:       [ 151 samples by 11 sample variables ]
+#tax_table()   Taxonomy Table:    [ 593 taxa by 8 taxonomic ranks ]
+#phy_tree()    Phylogenetic Tree: [ 593 tips and 591 internal nodes ]
+#refseq()      DNAStringSet:      [ 593 reference sequences ]
+
+##Make factor
+sample_data(Myco_ITS1_R1_CU_Filter1_F)$T1Dstatus <- as.factor(sample_data(Myco_ITS1_R1_CU_Filter1_F)$T1Dstatus)
+sample_data(Myco_ITS1_R1_CU_Filter1_F)$HLA <- as.factor(sample_data(Myco_ITS1_R1_CU_Filter1_F)$HLA)
+
+#We will be working with original ASVs/features and with data agglomerated to "Species Hypotheses" level
+Myco_ITS1_R1_CU_Filter1_F_GSH <- tax_glom(Myco_ITS1_R1_CU_Filter1_F, taxrank = "Sp.Hypotheses.", NArm=FALSE) # Definition: SHs are clusters of fungal DNA sequences that are considered to represent a species or species-like unit. These clusters are determined using sequence similarity thresholds applied to marker genes, such as the ITS region, which is the primary fungal DNA barcode.
+
+# Convert names that are not useful to NA
+#tax_table(DummyTOTUF) =gsub("uncultured organism", as.character(NA), tax_table(DummyTOTUF))
+
+#rarefy to 2000 sequences per sample --> Only one of the current samples has less than 2000 sequences, the same in both datasets
+Myco_ITS1_R1_CU_Filter1_F_RA <- rarefy_even_depth(Myco_ITS1_R1_CU_Filter1_F, sample.size = 2000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+Myco_ITS1_R1_CU_Filter1_F_RA5000 <- rarefy_even_depth(Myco_ITS1_R1_CU_Filter1_F, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+Myco_ITS1_R1_CU_Filter1_F_GSH_RA <- rarefy_even_depth(Myco_ITS1_R1_CU_Filter1_F_GSH, sample.size = 2000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+Myco_ITS1_R1_CU_Filter1_F_GSH_RA5000 <- rarefy_even_depth(Myco_ITS1_R1_CU_Filter1_F_GSH, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Genus
+My_G <- tax_glom(Myco_ITS1_R1_CU_Filter1_F, taxrank = "Genus", NArm=TRUE)
+taxa_names(My_G) <- tax_table(My_G)[,"Genus"]
+My_G_RA5000 <- rarefy_even_depth(My_G, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Family
+My_F <- tax_glom(Myco_ITS1_R1_CU_Filter1_F, taxrank = "Family", NArm=TRUE)
+taxa_names(My_F) <- tax_table(My_F)[,"Family"]
+My_F_RA5000 <- rarefy_even_depth(My_F, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Order
+My_O <- tax_glom(Myco_ITS1_R1_CU_Filter1_F, taxrank = "Order", NArm=TRUE)
+taxa_names(My_O) <- tax_table(My_O)[,"Order"]
+My_O_RA5000 <- rarefy_even_depth(My_O, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+#Phylum
+My_P <- tax_glom(Myco_ITS1_R1_CU_Filter1_F, taxrank = "Phylum", NArm=TRUE)
+taxa_names(My_P) <- tax_table(My_P)[,"Phylum"]
+My_P_RA5000 <- rarefy_even_depth(My_P, sample.size = 5000, rngseed = 711, replace=FALSE, trimOTUs = TRUE)
+
+Myco <- list("ASV" = Myco_ITS1_R1_CU_Filter1_F, "Species" = Myco_ITS1_R1_CU_Filter1_F_GSH, "Genus" = My_G, "Family"= My_F, "Order"= My_O, "Phylum"= My_P)
+Myco_RA5000 <- list("ASV" = Myco_ITS1_R1_CU_Filter1_F_RA5000, "Species" = Myco_ITS1_R1_CU_Filter1_F_GSH_RA5000, "Genus" = My_G_RA5000, "Family"= My_F_RA5000, "Order"= My_O_RA5000, "Phylum"= My_P_RA5000)
+
+#Genus
+My_G_RA <- tax_glom(Myco_ITS1_R1_CU_Filter1_F_RA, taxrank = "Genus", NArm=TRUE)
+taxa_names(My_G_RA) <- tax_table(My_G_RA)[,"Genus"]
+
+#Family
+My_F_RA <- tax_glom(Myco_ITS1_R1_CU_Filter1_F_RA, taxrank = "Family", NArm=TRUE)
+taxa_names(My_F_RA) <- tax_table(My_F_RA)[,"Family"]
+
+#Order
+My_O_RA <- tax_glom(Myco_ITS1_R1_CU_Filter1_F_RA, taxrank = "Order", NArm=TRUE)
+taxa_names(My_O_RA) <- tax_table(My_O_RA)[,"Order"]
+
+#Phylum
+My_P_RA <- tax_glom(Myco_ITS1_R1_CU_Filter1_F_RA, taxrank = "Phylum", NArm=TRUE)
+taxa_names(My_P_RA) <- tax_table(My_P_RA)[,"Phylum"]
+
+Myco_RA <- list("ASV" = Myco_ITS1_R1_CU_Filter1_F_RA, "Species" = Myco_ITS1_R1_CU_Filter1_F_GSH_RA, "Genus" = My_G_RA, "Family"= My_F_RA, "Order"= My_O_RA, "Phylum"= My_P_RA)
+
+save(Myco, Myco_RA, Myco_RA5000, file="./MycobiomeObjects.RData")
+```
